@@ -1,0 +1,2 @@
+# voiceBoard
+HK32F0301+WT588F02B-8S(B2)
