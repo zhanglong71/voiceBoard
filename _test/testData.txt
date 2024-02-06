@@ -1,0 +1,12 @@
+receive: 
+  {"xxxx":voi,"PLY":xxx}
+ack:
+  {"voi":xxxx,"PLY":OK}
+  {"voi":xxxx,"PLY":err}
+  
+  2024/2/2 9:55:38 º”–Ú¡–∫≈
+receive: 
+  {"xxxx":voi,"PLY":xxx,"SEQ":yyy}
+ack:
+  {"voi":xxxx,"PLY":OK,"SEQ":yyy}
+  {"voi":xxxx,"PLY":err,"SEQ":yyy}
