@@ -69,8 +69,18 @@ int sysProcess(void *pMsg)
         for(i = 0; ((i < MTABSIZE(buf)) && (u8FIFOout_irq(&g_uart1RxQue, &u8Data) == TRUE)); i++) {
             buf[i] = u8Data.u8Val;
         }
-        u8FIFOinit_irq(&g_uart1RxQue);  /** !!!!!!!!!!!! **/
-        buf[i] = '\0';
+        if (i < MTABSIZE(buf)) {
+            buf[i] = '\0';
+        } else {
+            u8FIFOinit_irq(&g_uart1RxQue);  /** !!!!!!!!!!!! **/
+            /** something wrong happened **/
+            #if 1
+            u8Data.u8Val = 'f';
+            u8FIFOin_irq(&g_uart1TxQue, &u8Data);
+            u8Data.u8Val = 'f';
+            u8FIFOin_irq(&g_uart1TxQue, &u8Data);
+            #endif
+        }
  #endif
  #if 0
         for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {

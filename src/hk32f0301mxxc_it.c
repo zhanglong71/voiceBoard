@@ -134,21 +134,21 @@ void UART1_IRQHandler(void)
 		UART_ClearITPendingBit(UART1, UART_IT_TXE);
 
         if(u8FIFOout(rs485transX.pfifo, &u8data) == TRUE) {
-           UART1->TDR = u8data.u8Val;
-            
+           //UART1->TDR = u8data.u8Val;
+           UART_SendData(UART1, u8data.u8Val);
         }
-		else
-		{
-			UART_ITConfig(UART1, UART_IT_TXE, DISABLE);  
-			UART_ITConfig(UART1, UART_IT_TC, ENABLE);
-		}
-	}
+        else
+        {
+            UART_ITConfig(UART1, UART_IT_TXE, DISABLE);
+            UART_ITConfig(UART1, UART_IT_TC, ENABLE);
+        }
+    }
     
-	/* UART1 transfer complete interrupt handle */
-	if( UART_GetITStatus(UART1, UART_IT_TC) != RESET )
-	{
-		UART_ClearITPendingBit(UART1, UART_IT_TC);
-		UART_ITConfig(UART1, UART_IT_TC, DISABLE);
+    /* UART1 transfer complete interrupt handle */
+    if( UART_GetITStatus(UART1, UART_IT_TC) != RESET )
+    {
+        UART_ClearITPendingBit(UART1, UART_IT_TC);
+        UART_ITConfig(UART1, UART_IT_TC, DISABLE);
         M485TR_R("发送结束，设置成为接收");
 	}
 
