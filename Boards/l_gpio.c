@@ -57,7 +57,35 @@ void GPIO_VOPPWR_off(void)
     GPIO_ResetBits(GPIOD, GPIO_Pin_3);
 }
 
-/** for test **/
+void watchDog_init(void)
+{
+    /* IWDG timeout equal to 250 ms (the timeout may varies due to LSI frequency
+       dispersion) */
+    /* Enable write access to IWDG_PR and IWDG_RLR registers */
+    IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
+    
+    /* IWDG counter clock: LSI/32 */
+    IWDG_SetPrescaler(IWDG_Prescaler_8);
+    
+    /* Set counter reload value to obtain 250ms IWDG TimeOut.
+       Counter Reload Value = 250ms/IWDG counter clock period
+                            = 250ms / (LSI/8)
+                            = 0.25s / (LsiFreq/8)
+                            = LsiFreq/(8 * 4)
+                            = LsiFreq/32
+     */
+    IWDG_SetReload(/*LsiFreq = */ 60000 / 32);
+    
+    /* Reload IWDG counter */
+    IWDG_ReloadCounter();
+    
+    /* Enable IWDG (the LSI oscillator will be enabled by hardware) */
+    IWDG_Enable();
+}
+
+/**********************
+ * for test 
+ **********************/
 void GPIO_init4led(void)
 {
   GPIO_InitTypeDef        GPIO_InitStructure;
@@ -72,8 +100,8 @@ void GPIO_init4led(void)
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOD, &GPIO_InitStructure);
 
-  //GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
-  //GPIO_Init(GPIOD, &GPIO_InitStructure);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
 
   /** led2 **/
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
@@ -109,3 +137,32 @@ void GPIO_led_blink(void)
     GPIO_Toggle(GPIOC, GPIO_Pin_7);
 #endif
 }
+
+void GPIO_PC06_K11INPUT(void) // used wifi_EN pin for test ??????????????????????????????????
+{
+    GPIO_InitTypeDef        GPIO_InitStructure;
+   
+    /* Enable GPIOC clock */
+    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC, ENABLE);
+    
+    /* Configure PC6 pin as input floating */
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
+}
+
+void test_outPC05byPC06(void)  // used wifi_EN pin for test ??????????????????????????????????
+{
+#if 1
+    GPIO_Toggle(GPIOC, GPIO_Pin_5);
+    for(int i = 0; i < 100; i++);
+#else
+    if (GPIO_ReadInputDataBit(GPIOC, GPIO_Pin_6)) {
+        GPIO_SetBits(GPIOC, GPIO_Pin_5);
+    } else {
+        GPIO_ResetBits(GPIOC, GPIO_Pin_5);
+    }
+#endif
+}
+

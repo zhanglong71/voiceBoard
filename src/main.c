@@ -112,9 +112,12 @@ int main(void)
     SysTick_Config(SystemCoreClock / 100);       // 10ms
     TIM_Config();
     GPIO_init4led();
+    GPIO_PC06_K11INPUT();
+    
     GPIO_initVOPPort();
     GPIO_init485();
     vp_init();
+    watchDog_init();
     /*********************************/
     promptInit();
     rs485Init();
@@ -139,10 +142,11 @@ int main(void)
     msgq_init(&g_msgq);
     msg.msgType = CSYS_INIT;
     msgq_in_irq(&g_msgq, &msg);
-
+    
     /* Infinite Loop */
     while(1)
     {
+        IWDG_ReloadCounter();  // Reload IWDG counter
         //deamon_uart1_send();
         deamon_uart2_send();
         actionDoing(&g_promptQueue);

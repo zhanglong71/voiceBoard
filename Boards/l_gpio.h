@@ -13,4 +13,10 @@ void GPIO_led_blink(void);
 void GPIO_led1_blink(void);
 void GPIO_led2_blink(void);
 
+void watchDog_init(void);
+
+void GPIO_PC06_K11INPUT(void);
+void test_outPC05byPC06(void);
+
+
 #endif

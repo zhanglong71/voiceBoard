@@ -57,13 +57,13 @@ int f_init(void *pMsg)
         break;
         
     case CSYS_INIT:        // step1
+        reportVersion();
         //M485TR_T("set H before send data!!!");  //??????????????
         //GPIO_VOPPWR_on();  //????????
         SetTimer_irq(&g_timer[0], TIMER_1SEC, CSYS_INITS1);
 	    break;
  
     case CSYS_INITS1:      // step2
-        reportVersion();
         //vp_stor(vopIdx_STOP);
         //promptInit();
         //vp_stop();
