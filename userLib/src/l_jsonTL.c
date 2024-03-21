@@ -3,6 +3,7 @@
 #include "ptype.h"
 #include "macro.h"
 #include "global.h"
+#include "version.h"
 
 #include "l_arch.h"
 #include <string.h>
@@ -16,19 +17,24 @@
 #include "l_rs485.h"
 // #include "main.h"
 /**********************************************************************************************/
-void reportVersion(void)
+RetStatus reportVersion(void)
 {
     u8 i = 0;
     u8Data_t u8Data;
     u8 buf[32];
+    RetStatus retStatus = POK;
     
-    sprintf(buf, "voice softVER:202401101423.v01");
+    //sprintf(buf, "voice softVER:202403201423.%s" CVERSION);
+    sprintf(buf, "%s.%s.%s.%s", CBOARD, CWARE, CDATETIME, CVERSION);
 
     for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {
         u8Data.u8Val = buf[i];
-        // u8FIFOin_irq(&g_uart1TxQue, &u8Data);
-        rs485_stor_irq(&u8Data);
+        retStatus = rs485_stor_irq(&u8Data);
+        if (retStatus != POK) {
+            return retStatus;
+        }
     }
+    return retStatus;
 }
 
 /**********************************************************************************************/
@@ -685,6 +691,24 @@ unsigned char JsonParseL0(unsigned char* jsonstrbuf, kv_t* jsonstcarr)
 }
 
 /*********************************************
+ * {"voi":xxx,"ver":vxxxx}
+ *********************************************/
+void generateVoiceAckVer(u8* to, u8* ver)
+{
+    u8 i = 0;
+    u8Data_t u8Data;
+    u8 buf[32];
+    
+    sprintf(buf, "{\"voi\":%s,\"ver\":%s}", to, ver);
+
+    for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {
+        u8Data.u8Val = buf[i];
+        rs485_stor_irq(&u8Data);
+    }
+}
+
+
+/*********************************************
  * {"voi":xxxx,"PLY":OK}
  * {"voi":xxxx,"PLY":err}
  *********************************************/
@@ -704,7 +728,7 @@ void generateVoiceAckOk(u8* to)
     }
 }
  #else
- void generateVoiceAckOk(u8* to, u8 seq)
+ void generateVoiceAckOk(char* to, u8 seq)
 {
     u8 i = 0;
     u8Data_t u8Data;
@@ -736,7 +760,7 @@ void generateVoiceAckErr(u8* to)
     }
 }
  #else
- void generateVoiceAckErr(u8* to, u8 seq)
+ void generateVoiceAckErr(char* to, u8 seq)
 {
     u8 i = 0;
     u8Data_t u8Data;

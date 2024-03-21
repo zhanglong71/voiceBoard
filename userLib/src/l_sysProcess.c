@@ -2,6 +2,7 @@
 #include "ptype.h"
 #include "macro.h"
 #include "global.h"
+#include "version.h"
 #include "l_arch.h"
 #include <string.h>
 #include <stdlib.h>
@@ -11,6 +12,7 @@
 #include "l_gpio.h"
 #include "l_actionFIFO.h"
 #include "l_sysProcess.h"
+#include "l_rs485.h"
 #include "hk32f0301mxxc.h"
 
 int sysProcess(void *pMsg)
@@ -61,6 +63,9 @@ int sysProcess(void *pMsg)
          * ack:
          *    {"voi":xxxx,"PLY":OK,"SEQ":num}
          *    {"voi":xxxx,"PLY":err,"SEQ":num}
+         *
+         * receive: {"user":voi,"ask":ver}
+         * ack:     {"voi":user,"ver":v001}
          ************************************/
         memset(buf, 0, sizeof(buf));
         memset(KVarr, 0, sizeof(KVarr));
@@ -108,6 +113,9 @@ int sysProcess(void *pMsg)
                      Mset_bit(flag,3);
                      u8Seq = atoi(KVarr[i].value);
                  }
+                 if (strstr(KVarr[i].key, "ask") && strstr(KVarr[i].value, "ver")) {
+                     Mset_bit(flag,4);
+                 }
             }
             if (Mget_bit(flag, 1) && Mget_bit(flag, 2) && Mget_bit(flag, 3)) {
                 if (voi < 100) {
@@ -122,6 +130,10 @@ int sysProcess(void *pMsg)
                 } else {
                     generateVoiceAckErr(KVarr[src_idx].key, u8Seq_last);
                 }
+            }
+            
+            if (Mget_bit(flag, 1) && Mget_bit(flag, 4)) {
+                generateVoiceAckVer(KVarr[src_idx].key, CVERSION);
             }
         };
 #endif
@@ -228,9 +240,9 @@ int sysProcess(void *pMsg)
 		actProcess(&g_promptQueue);
 		break;
         
-    case C485_TOUT:
-		rs485actProcess();
-		break;
+    case C485_STEP:
+        rs485actProcess();
+        break;
     
     case C485_OVER:    
         rs485actOver();

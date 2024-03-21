@@ -174,6 +174,10 @@ int msgq_out_irq(msgq_t *q, msg_t *val)        //Note: check queue empty is nece
  *******************************************************************************/
 void SetTimer(Timer_t * timer, int tick, msgType_t msgType)
 {
+    if (timer == NULL) {
+        return;
+    }
+
     timer->tick = tick;
     timer->tick_bak = tick;
     timer->msgType = msgType;
@@ -187,6 +191,9 @@ void SetTimer_irq(Timer_t * timer, int tick, msgType_t msgType)
 
 void ClrTimer(Timer_t * timer)
 {
+    if (timer == NULL) {
+        return;
+    }
     timer->tick = 0;
     timer->tick_bak = 0;
 }

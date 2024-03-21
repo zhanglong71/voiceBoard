@@ -1,7 +1,7 @@
 #ifndef __L_JSONTL_H__
 #define __L_JSONTL_H__
 
-void reportVersion(void);
+RetStatus reportVersion(void);
 jsonTL_t* getReportCmdbyMode(u8 mode);
 jsonTL_t* getGetCharCmdbyMode(u8 mode);
 
@@ -26,8 +26,9 @@ int reportResetNet(void *arg);
 
 /***********************************************/
 unsigned char JsonParseL0(unsigned char* jsonstrbuf, kv_t* jsonstcarr);
-void generateVoiceAckOk(u8* to, u8 seq);
-void generateVoiceAckErr(u8* to, u8 seq);
+void generateVoiceAckVer(u8* to, u8* ver);
+void generateVoiceAckOk(char* to, u8 seq);
+void generateVoiceAckErr(char* to, u8 seq);
 u8 isPlayVoiceCommand(kv_t* kv_arr, u8* voi_idx);
 
 

@@ -17,17 +17,6 @@ int f_idle(void *pMsg)
     {
     case CMSG_TMR:
         g_tick++;
-        /********************/
-        //GPIO_led2_blink();
-        //u8Data_t u8Data;
-        //u8Data.u8Val = g_tick & 0x7f;
-        //u8FIFOin_irq(&g_uart2TxQue, &u8Data); //????????????????????????????
-        //u8FIFOin_irq(&g_uart1TxQue, &u8Data); //????????????????????????????
-       
-        // vp_stor((g_tick & 0x1f));        //????????????????????????????????
-        
-        //reportVersion();  // ???????????????????????????
-        /********************/
         break;
         
     case CMSG_INIT:
@@ -50,6 +39,8 @@ int f_init(void *pMsg)
 {
     func_t func;
     msg_t msg;
+    RetStatus retStatus = POK;
+    
     switch(((msg_t *)pMsg)->msgType) 
     {
     case CMSG_TMR:
@@ -57,18 +48,15 @@ int f_init(void *pMsg)
         break;
         
     case CSYS_INIT:        // step1
-        reportVersion();
-        //M485TR_T("set H before send data!!!");  //??????????????
-        //GPIO_VOPPWR_on();  //????????
-        SetTimer_irq(&g_timer[0], TIMER_1SEC, CSYS_INITS1);
+        retStatus = reportVersion();
+        if (retStatus != POK) {  // busy! try again later; giveup the 
+            SetTimer_irq(&g_timer[0], TIMER_100MS, CSYS_INIT);
+        } else {
+            SetTimer_irq(&g_timer[0], TIMER_1SEC, CSYS_INITS1);
+        }
 	    break;
  
     case CSYS_INITS1:      // step2
-        //vp_stor(vopIdx_STOP);
-        //promptInit();
-        //vp_stop();
-        // vp_setDefaultVolume();
-        // vp_stor(vopIdx_standard);
         SetTimer_irq(&g_timer[0], TIMER_1SEC, CMSG_TMR);
 	    break;
         
@@ -78,8 +66,8 @@ int f_init(void *pMsg)
         func.func = f_idle;
         fstack_push(&g_fstack, &func);
 
-        msgq_init(&g_msgq);
-        msg.msgType = CSYS_INIT;
+        // msgq_init(&g_msgq);
+        msg.msgType = CMSG_INIT;
         msgq_in_irq(&g_msgq, &msg);
         g_tick = 0;
         SetTimer_irq(&g_timer[0], TIMER_1SEC, CMSG_TMR);

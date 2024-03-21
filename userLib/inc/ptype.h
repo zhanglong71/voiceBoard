@@ -8,12 +8,17 @@
  *******************************************************************************/
  #include <const.h>
  //#include <stdint.h>
+ 
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 /*******************************************************************************/
 typedef enum {
-    FAILED = 0, 
-    PASSED = !FAILED
+    PERROR = -1,
+    POK = 0,
 } RetStatus;
 
 typedef	int	 (*pfunc_t)(void* arg);
@@ -75,7 +80,7 @@ typedef enum {
 	//CVOP_STRT,		/** voice prompt start **/
 	//CVOP_OVER,
 
-	C485_TOUT,		/** 动作超时 **/
+	C485_STEP,		/** 动作超时 **/
 	C485_OVER,		/** 动作完成 **/
 	
 //	CACT_TOUT,		/** 动作超时 **/
