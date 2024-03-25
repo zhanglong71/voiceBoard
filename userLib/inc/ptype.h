@@ -48,17 +48,36 @@ typedef enum {
     CSYS_INITS3,  	//
     
     CMSG_INIT,  	//初始化动作(进入选择)
-    CGETDEVINFO_REQ,
     CRESP_INFO,
+    
+    CGETDEVINFO_REQ,
     CGETDEVINFO_RSPOK,
     CGETDEVINFO_RSPERROR,
+    
     CREPORT_RSPOK,
     CREPORT_RSPERROR,
     CGET_CHAR,
+    CGETCHAR_STATUS,
+    CGETCHAR_MOP,
+    CGETCHAR_ROLLER,
+    CGETCHAR_CLEARWATER,
+    CGETCHAR_PUMP,
+    CGETCHAR_BATTERY,
+    CGETCHAR_CHARGE,
+    CGETCHAR_NETINFO,
+    CGETCHAR_UPDATE,
+    
     CPUT_CHAR,
     CHEART_BEAT,
     CWIFI_STATUS,
+    CSCAN_WIFI,
+    
+    CCONN_WIFI,
     CWIFI_TEST,
+    
+    CRESET_NET,
+    CRESETNET_RSPOK,
+    CRESETNET_RSPFAIL,
     
     CMSG_TMR,
     CMSG_USTMR,
@@ -121,12 +140,10 @@ typedef struct {
     void *var2;
 }pair_t;
 
-typedef struct {
-	u8 smStatus_curr;
-    u8 smStatus_next;
-} rs485pair_t;
-
-
+typedef struct pair_u8u8_s {
+   u8 first;
+   u8 second;
+}pair_u8u8_t;
 
 #if 0
 typedef struct bitmap_s {
@@ -316,6 +333,21 @@ typedef enum {
     SM_RS485_ERROR = 0xF1,
 } rs485sm_t;
 
+/*******************************************************************************/
+typedef struct ComponentField_s{
+    u8 mop;
+	u8 moto;
+	u8 pump;
+	u8 battery;
+	u8 charge;
+	u8 clearWater;
+} ComponentField_t;
+
+typedef struct reportStatusBody_s{
+	u8 index;
+	u8* body;
+} reportStatusBody_t;
+/*******************************************************************************/
 
 /*******************************************************************************/
 #endif /** ifndef end **/

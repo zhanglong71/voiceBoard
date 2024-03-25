@@ -82,4 +82,47 @@
 #define	CMAX1_COUPLE		6    // the max number of kv couple in one object between master and slave (uart1 communicate)
 
 /*******************************************************************************/
+/** 只要不相同即可 **/
+#define CINDEX_UNKNOW                 (0)
+
+#define CINDEX_STANDBY                (1)
+#define CINDEX_STANDARD               (2)  
+#define CINDEX_HIGHPOWER              (3)
+#define CINDEX_CLEANING               (4)
+#define CINDEX_RINSE                  (5)
+
+#define CINDEX_ROLLEROVERLOAD         (6)
+#define CINDEX_ROLLERNORMAL           (7)
+
+#define CINDEX_CLEARWATERNORMAL       (8)
+#define CINDEX_CLEARWATERSHORTAGE     (9)
+
+#define CINDEX_PUMPNORMAL             (10)
+#define CINDEX_PUMPOVERLOAD           (11)
+#define CINDEX_PUMPCURRENTSMALL       (12)
+
+#define CINDEX_BATTERYNORMAL          (13)
+#define CINDEX_BATTERYLOW             (14)
+#define CINDEX_BATTERYLEVEL           (15)
+
+#define CINDEX_UNCHARGED              (16)
+#define CINDEX_CHARGING               (17)
+#define CINDEX_CHARGECOMPLETE         (18)
+#define CINDEX_CHARGEFAULT            (19)
+
+#define CINDEX_TANKINPLACE            (31)
+#define CINDEX_TANKNOTINPLACE         (32)
+#define CINDEX_DORMANCY               (33)
+#define CINDEX_SCREENSHUTDOWN         (34)
+#define CINDEX_NEUTRAL                (35)
+#define CINDEX_CONNECTION             (36)
+#define CINDEX_FLUSHING               (37) 
+#define CINDEX_FULLSEWAGE             (38)
+#define CINDEX_SETUP                  (39)
+
+#define CINDEX_INVALID (0xff)
+
+/*******************************************************************************/
+
+/*******************************************************************************/
 #endif

@@ -16,33 +16,20 @@
 #include "l_rs485.h"
 // #include "main.h"
 
-int doNothing(unsigned *arg)
-{
-    (void)arg;
-    return 0;
-}
-
-int constructGetCharCmd(u8 status)
-{
-    //jsonTL_t* p = getDevInfo(0);
-    //sm_sendData(p);
-    return 0;
-}
-
 int reportDevInfo(unsigned *arg)
 {
     (void)arg;
     jsonTL_t* p = getDevInfo(0);
     sm_sendData(p);
-    return 0;
+    return (TRUE);
 }
 
 int reportHeartbeat(unsigned *arg)
 {
     (void)arg;
     jsonTL_t* p = getHeartbeat();
-    sm_sendData(p);
-    return 0;
+    sm_sendData_once(p);
+    return (TRUE);
 }
 
 int reportService(unsigned *arg)
@@ -50,195 +37,259 @@ int reportService(unsigned *arg)
     (void)arg;
     jsonTL_t* p = getService(0);
     sm_sendData(p);
-    return 0;
+    return (TRUE);
 }
 
-int reportResetNet(void *arg)
+int reportResetNet(u8 idx)
+{
+    static jsonTL_t resetNetArr[] = {
+        { "resetNet", 2,"AP"},   /** reset net and config net with AP **/
+        { "resetNet", 3,"BLE"},  /** reset net and config net with BLE **/
+    };
+    if (idx >= MTABSIZE(resetNetArr)) {
+        return (FALSE);
+    }
+    sm_sendData_once(&(resetNetArr[idx]));
+
+    return (TRUE);
+}
+
+int reportScanWifi(void *arg)
 {
     (void)arg;
     u8Data_t u8Data;
-    u8 buf[] = "resetNet,2,AP\n";
+    u8 buf[] = "scanWifi,0\n";
     for (int i = 0; i < strlen(buf); i++) {
         u8Data.u8Val = buf[i];
         u8FIFOin_irq(&g_uart2TxQue, &u8Data);
     }
 
-    return 0;
+    return (TRUE);
 }
 
-#if 1
-const static u8* statusBodyArr[] = {
-#define CINDEX_CHARGING (0)
-    "{\"mop\":{\"status\":\"charging\"}}",
-#define CINDEX_CHARGECOMPLETE (1)
-    "{\"mop\":{\"status\":\"chargeComplete\"}}",
-#define CINDEX_CHARGEFAULT (2)
-    "{\"mop\":{\"status\":\"chargeFault\"}}",
-#define CINDEX_LOWBATTERY (3)
-    "{\"mop\":{\"status\":\"lowBattery\"}}",
-#define CINDEX_DORMANCY (4)
-    "{\"mop\":{\"status\":\"dormancy\"}}",
-#define CINDEX_SCREENSHUTDOWN (5)
-    "{\"mop\":{\"status\":\"ScreenShutdown\"}}",
-#define CINDEX_STANDBY (6)
-    "{\"mop\":{\"status\":\"standby\"}}",
-#define CINDEX_NEUTRAL (7)
-    "{\"mop\":{\"status\":\"neutral\"}}",                 // 空档模式
-#define CINDEX_SETUP (8)
-    "{\"mop\":{\"status\":\"setup\"}}",                      // 设置模式 setup mode
-#define CINDEX_SETUP2 (9)
-    "{\"mop\":{\"status\":\"setup\"}}",                      // 设置语音 setup voice prompt
-#define CINDEX_SETUP3 (10)
-    "{\"mop\":{\"status\":\"setup\"}}",                     // wifi复位 wifiReset
+#if 1   // !!! 
+int reportConnectWifi(void *arg)
+{
+    (void)arg;
+    jsonTL_t* p = getConnectWifi(0);
+    sm_sendData(p);
+    return (TRUE);
+}
+#endif
+
+
+
+const static reportStatusBody_t reportStatusBodyArr[] = {
+    { CINDEX_UNKNOW,              "{\"mop\":{\"status\":0}}"},             // unknow 未知状态(主机断开及其它)
+    { CINDEX_STANDBY,             "{\"mop\":{\"status\":1}}"},             // standby 待机
+    { CINDEX_STANDARD,            "{\"mop\":{\"status\":2}}"},                   // standard 标准模式
+    { CINDEX_HIGHPOWER,           "{\"mop\":{\"status\":3}}"},                   // highPower强力模式
+    { CINDEX_RINSE,               "{\"mop\":{\"status\":4}}"},                   // rinse 大水冲洗模式
+    { CINDEX_CLEANING,            "{\"mop\":{\"status\":5}}"},                   // cleaning 自清洗模式
     
-#define CINDEX_CONNECTION (11)                          
-    "{\"mop\":{\"status\":\"connection\"}}",               // 主机接驳
-#define CINDEX_STANDARD (12)  
-    "{\"mop\":{\"status\":\"standard\"}}",                 // 标准模式
-#define CINDEX_HIGHPOWER (13)
-    "{\"mop\":{\"status\":\"highpower\"}}",                 // 强力模式
-#define CINDEX_CLEANING (14)
-    "{\"mop\":{\"status\":\"cleaning\"}}",                 // 自清洗模式
-#define CINDEX_FLUSHING (15)
-    "{\"mop\":{\"status\":\"flushing\"}}",                   // 大水冲洗模式
-#define CINDEX_TANKINPLACE (16)
-    "{\"mop\":{\"status\":\"tankInPlace\"}}",                // 水箱在位识别
-#define CINDEX_TANKNOTINPLACE (17)
-    "{\"mop\":{\"status\":\"tankNotInPlace\"}}",           // 水箱不在位识别
-#define CINDEX_FULLSEWAGE (18)
-    "{\"mop\":{\"status\":\"fullSewage\"}}",                // 污水满
-#define CINDEX_INSUFFICIENTWATER (19)
-    "{\"mop\":{\"status\":\"InsufficientWater\"}}",         // 没有清水
-#define CINDEX_PUMPOVERLOAD (20)
-    "{\"mop\":{\"status\":\"pumpOverLoad\"}}",            // 水泵过载     pumpOverload
-#define CINDEX_PUMPCURRENTSMALL (21)
-    "{\"mop\":{\"status\":\"pumpCurrentSmall\"}}",            // 水泵电流过小 pumpCurrentToosmall
-#define CINDEX_MOTOROVERLOAD (22)
-    "{\"mop\":{\"status\":\"motorOverLoad\"}}",                 // 电机故障
-#define CINDEX_INVALID (0xff)
-    ""
+    { CINDEX_ROLLERNORMAL,        "{\"roller\":{\"status\":1}}"},                // normal 滚筒电机正常
+    { CINDEX_ROLLEROVERLOAD,      "{\"roller\":{\"status\":2}}"},                // error 滚筒电机故障
+    
+    { CINDEX_CLEARWATERNORMAL,    "{\"clearWater\":{\"status\":1}}"},             // clear water normal 清水正常
+    { CINDEX_CLEARWATERSHORTAGE,  "{\"clearWater\":{\"status\":2}}"},             // clear water shortage 清水不足
+    
+    { CINDEX_PUMPNORMAL,          "{\"pump\":{\"status\":1}}"},                  // 水泵正常     pumpNormal
+    { CINDEX_PUMPOVERLOAD,        "{\"pump\":{\"status\":2}}"},                  // 水泵过载     pumpOverload
+    { CINDEX_PUMPCURRENTSMALL,    "{\"pump\":{\"status\":3}}"},                  // 水泵电流过小 pumpCurrentTooSmall
+    
+    { CINDEX_BATTERYNORMAL,       "{\"batterystatus\":{\"status\":1}}"},      // 电池电压在正常范围
+    { CINDEX_BATTERYLOW,          "{\"batterystatus\":{\"status\":2}}"},      // 电池电压过低
+    { CINDEX_BATTERYLEVEL,        "{\"batterystatus\":{\"level\":%u}}"},
+    
+    { CINDEX_UNCHARGED,           "{\"charge\":{\"status\":1}}"},         // 没充电
+    { CINDEX_CHARGING,            "{\"charge\":{\"status\":2}}"},         // 正在充电
+    { CINDEX_CHARGECOMPLETE,      "{\"charge\":{\"status\":3}}"},         // 充电完成(区别不充电场景)
+    { CINDEX_CHARGEFAULT,         "{\"charge\":{\"status\":4}}"},         // 充电故障
 };
 
-
-static u8 getIdxbyMode(u8 mode)
+u8 getIdxbyMode(u8 mode)
 {
-    const static pair_t statusNum2IdxArr[] = {
-        {(void *)1, (void *)CINDEX_STANDARD},
-        {(void *)2, (void *)CINDEX_HIGHPOWER},
+    const static pair_u8u8_t statusNum2IdxArr[] = {
+        {0, CINDEX_UNKNOW},
+        {1, CINDEX_STANDARD},
+        {2, CINDEX_HIGHPOWER},
+        {3, CINDEX_HIGHPOWER},
+        {4, CINDEX_RINSE},     /*** !!!!!! ***/
+        {5, CINDEX_CLEANING},  /*** !!!!!! ***/
     };
 
     for (int i = 0; i < MTABSIZE(statusNum2IdxArr); i++) {
-        if ((u8)(statusNum2IdxArr[i].var1) == mode) {
-            return (u8)statusNum2IdxArr[i].var2;
+        if ((statusNum2IdxArr[i].first) == mode) {
+            return statusNum2IdxArr[i].second;
         }
     }
     return CINDEX_INVALID;
 }
-#endif
 
-jsonTL_t* getGetCharCmdbyMode(u8 mode)
+int reportBatteryLevel(u8 arg)
 {
-    static jsonTL_t jsonTypeTx;
-    
-    u8 idx = getIdxbyMode(mode); 
-    if (idx >= MTABSIZE(statusBodyArr)) {
-        return (NULL);
+    jsonTL_t jsonTypeTx;
+    u8 buf[64]; 
+    u8 len = 0;
+    u8Data_t u8Data;
+    u8 idx = 0;
+
+    for (idx = 0; idx < MTABSIZE(reportStatusBodyArr); idx++) {
+        if (reportStatusBodyArr[idx].index == CINDEX_BATTERYLEVEL) {
+            break;
+        }
     }
-
-    jsonTypeTx.jHead = "getChar";
-    jsonTypeTx.jBody = statusBodyArr[idx];
-    jsonTypeTx.jLen = strlen(statusBodyArr[idx]);
-    
-	return (&jsonTypeTx);
-}
-
-int reportGetCharCmd(unsigned *arg)
-{
-    (void)arg;
-    jsonTL_t* p = getGetCharCmdbyMode(1);  //????????????????????????????
-    //jsonTL_t* p = getGetCharCmdbyMode(sysvar.Modes);
-    sm_sendData(p);
-    return 0;
-}
-
-/** 上报命令 **/
-#if 1
-jsonTL_t* getReportCmdbyMode(u8 mode)
-{
-    static jsonTL_t jsonTypeTx;
-    u8 idx = getIdxbyMode(mode); 
-    if (idx >= MTABSIZE(statusBodyArr)) {
-        return (NULL);
+    if (idx >= MTABSIZE(reportStatusBodyArr)) {
+        return (MTABSIZE(reportStatusBodyArr));
     }
 
     jsonTypeTx.jHead = "reportChar";
-    jsonTypeTx.jBody = statusBodyArr[idx];
-    jsonTypeTx.jLen = strlen(statusBodyArr[idx]);
+    jsonTypeTx.jBody =buf;
+    jsonTypeTx.jLen = strlen(buf);
     
-	return (&jsonTypeTx);
-}
-#endif
+    /** hhhhhhhhh head **/
+    len = strlen(jsonTypeTx.jHead);
+    for (int i = 0; i < len; i++) {
+        u8Data.u8Val = jsonTypeTx.jHead[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+    u8Data.u8Val = ',';
+    u8FIFOin_irq(&g_uart2TxQue, &u8Data); 
+    
+    /** lllllllll length **/
+    sprintf(buf, reportStatusBodyArr[idx].body,  arg);
+    len = strlen(buf);
+    if (sprintf(buf, "%d", len)) {
+        for (int i = 0; i < strlen(buf); i++) {
+            u8Data.u8Val = buf[i];
+            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+        }
+    }
+    u8Data.u8Val = ',';
+    u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    
+    /** bbbbbbbbb body **/
+    sprintf(buf, reportStatusBodyArr[idx].body,  arg);
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
 
+    u8Data.u8Val = '\n';
+    u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    return (TRUE);
+}
+
+/***********************************************************************
+ * moto/pump/battery/clear/charge
+ ***********************************************************************/
+int reportComponentStatus(u8 statusIndex)
+{
+    static jsonTL_t jsonTypeTx;
+    u8 idx = 0;
+
+    for (idx = 0; idx < MTABSIZE(reportStatusBodyArr); idx++) {
+        if (reportStatusBodyArr[idx].index == statusIndex) {
+            break;
+        }
+    }
+
+    if (idx >= MTABSIZE(reportStatusBodyArr)) {
+        return (MTABSIZE(reportStatusBodyArr));
+    }
+
+    jsonTypeTx.jHead = "reportChar";
+    jsonTypeTx.jBody = reportStatusBodyArr[idx].body;
+    jsonTypeTx.jLen = strlen(jsonTypeTx.jBody);
+    
+    sm_sendData_once(&jsonTypeTx);
+    return 0;
+}
+
+int getCharAckComponentStatus(u8 statusIndex)
+{
+    static jsonTL_t jsonTypeTx;
+    u8 idx = 0;
+
+    for (idx = 0; idx < MTABSIZE(reportStatusBodyArr); idx++) {
+        if (reportStatusBodyArr[idx].index == statusIndex) {
+            break;
+        }
+    }
+
+    if (idx >= MTABSIZE(reportStatusBodyArr)) {
+        return (MTABSIZE(reportStatusBodyArr));
+    }
+
+    jsonTypeTx.jHead = "getChar";
+    jsonTypeTx.jBody = reportStatusBodyArr[idx].body;
+    jsonTypeTx.jLen = strlen(jsonTypeTx.jBody);
+    
+    sm_sendData_once(&jsonTypeTx);
+    return 0;
+}
+
+/*********************************************************************/
 jsonTL_t* getDevInfo(u8 idx)
 {
     static jsonTL_t jsonTypeDevInfo[] = {
         {
             "getDevInfo", 0,
-            "{\"v\": \"1.0.1\","
-            "\"dv\": \"1.0.0\","
-            "\"prodId\": \"DM6\","
-            "\"deviceTypeId\": \"01D\","
-            "\"manufacturerId\": \"416\","
-            "\"deviceModel\": \"OHOS002\","
-            "\"deviceTypeNameEn\": \"mop\","
-            "\"manufacturerNameEn\": \"DIISEA\","
-            "\"networkType\": \"AP\","
-            "\"acKey\": \"702B20206F2468203956502B3A6A673A734AE2CC6BE3B7A4CDD9BA27DD889661DB9D818EED21F46CD159B2AAAAAC16C8\","
-            "\"productSeries\": \"Certificate\","
-            "\"productKey\": \"f2b80c7c77b840e4b7017029baab9bf6\","
-            // "\"marketName\": \"多功能水尘洗地机\","
-            "\"marketName\": \"DIISEA-DM6\","
-            "\"brand\": \"c-chip\"}"
+            "{\"v\":\"1.0.1\","
+            "\"dv\":\"1.0.0\","
+            "\"prodId\":\"2NPQ\","
+            "\"deviceTypeId\":\"19F\","
+            "\"manufacturerId\":\"hlp\","
+            "\"deviceModel\":\"DM6\","
+            "\"deviceTypeNameEn\":\"Scrubber\","
+            "\"manufacturerNameEn\":\"DIISEA\","
+            "\"networkType\":\"AP\","
+            "\"acKey\":\"2B5F3377287C4920506E604B326D5A6479F44A6942B1FE3C86CAD3E3A5F9654D6BC810E9D216466D843A0385A723CC8E\","
+            "\"productSeries\":\"DM6\","
+            "\"productKey\":\"f2b80c7c77b840e4b7017029baab9bf6\","
+            "\"marketName\":\"滴水洗地机DM6\","
+            //"\"marketName\":\"DIISEA-DM6\","
+            "\"brand\":\"滴水科技\"}"
+        },
+        {
+            "getDevInfo", 0,
+            "{\"v\":\"1.0.1\","
+            "\"dv\":\"1.0.0\","
+            "\"prodId\":\"2NPQ\","
+            "\"deviceTypeId\":\"19F\","
+            "\"manufacturerId\":\"hlp\","
+            "\"deviceModel\":\"DM6\","
+            "\"deviceTypeNameEn\":\"Scrubber\","
+            "\"manufacturerNameEn\":\"DIISEA\","
+            "\"networkType\":\"BLE\","
+            "\"acKey\":\"2B5F3377287C4920506E604B326D5A6479F44A6942B1FE3C86CAD3E3A5F9654D6BC810E9D216466D843A0385A723CC8E\","
+            "\"productSeries\":\"DM6\","
+            "\"productKey\":\"f2b80c7c77b840e4b7017029baab9bf6\","
+            "\"marketName\":\"滴水洗地机DM6\","
+            //"\"marketName\":\"DIISEA-DM6\","
+            "\"brand\":\"滴水科技\"}"
         },
 
         {
             "getDevInfo", 0,
-            "{\"v\": \"1.0.1\","
-            "\"dv\": \"1.0.0\","
-            "\"prodId\": \"DM6\","
-            "\"deviceTypeId\": \"01D\","
-            "\"manufacturerId\": \"416\","
-            "\"deviceModel\": \"OHOS002\","
-            "\"deviceTypeNameEn\": \"mop\","
-            "\"manufacturerNameEn\": \"DIISEA\","
-            "\"networkType\": \"BLE\","
-            "\"acKey\": \"702B20206F2468203956502B3A6A673A734AE2CC6BE3B7A4CDD9BA27DD889661DB9D818EED21F46CD159B2AAAAAC16C8\","
-            "\"productSeries\": \"Certificate\","
-            "\"productKey\": \"f2b80c7c77b840e4b7017029baab9bf6\","
-            "\"marketName\": \"多功能水尘洗地机\","
-            "\"brand\": \"c-chip\"}"
-        },
-
-        {
-            "getDevInfo", 0,
-            "{\"v\": \"1.0.1\","
-            "\"dv\": \"1.0.0\","
-            "\"prodId\": \"DM6\","
-            "\"deviceTypeId\": \"01D\","
-            "\"manufacturerId\": \"416\","
-            "\"deviceModel\": \"OHOS002\","
-            "\"deviceTypeNameEn\": \"mop\","
-            "\"manufacturerNameEn\": \"DIISEA\","
-            "\"networkType\": \"BLE\","
-            "\"near\": {"
-                "\"type\": 1,"
-                "\"trp\": -8"
+            "{\"v\":\"1.0.1\","
+            "\"dv\":\"1.0.0\","
+            "\"prodId\":\"2NPQ\","
+            "\"deviceTypeId\":\"19F\","
+            "\"manufacturerId\":\"hlp\","
+            "\"deviceModel\":\"DM6\","
+            "\"deviceTypeNameEn\":\"Scrubber\","
+            "\"manufacturerNameEn\":\"DIISEA\","
+            "\"networkType\":\"BLE\","
+            "\"near\":{"
+                "\"type\":1,"
+                "\"trp\":-8"
             "},"
-            "\"acKey\": \"702B20206F2468203956502B3A6A673A734AE2CC6BE3B7A4CDD9BA27DD889661DB9D818EED21F46CD159B2AAAAAC16C8\","
-            "\"productSeries\": \"Certificate\","
-            "\"productKey\": \"f2b80c7c77b840e4b7017029baab9bf6\","
-            "\"marketName\": \"多功能水尘洗地机\","
-            "\"brand\": \"c-chip\"}"
+            "\"acKey\":\"2B5F3377287C4920506E604B326D5A6479F44A6942B1FE3C86CAD3E3A5F9654D6BC810E9D216466D843A0385A723CC8E\","
+            "\"productSeries\":\"DM6\","
+            "\"productKey\":\"f2b80c7c77b840e4b7017029baab9bf6\","
+            "\"marketName\":\"滴水洗地机DM6\","
+            "\"brand\":\"滴水科技\"}"
         }
     };
 
@@ -254,22 +305,30 @@ jsonTL_t* getService(u8 idx)
         {
             "reportService", 0,
             "{"
-                "\"sId\": ["
-                    "\"master\","
+                "\"sId\":["
+                    "\"status\","
+                    "\"charge\","
+                    "\"pump\","
+                    "\"clearWater\","
+                    "\"roller\","
+                    "\"batterystatus\","
                     "\"mop\","
-                    "\"sparyer\","
-                    "\"aspirator\","
-                    "\"brush\""
+                    "\"netInfo\","
+                    "\"update\""
                     "],"
-                "\"sType\": ["
-                    "\"master\","
+                "\"sType\":["
+                    "\"status\","
+                    "\"charge\","
+                    "\"pump\","
+                    "\"clearWater\","
+                    "\"roller\","
+                    "\"batterystatus\","
                     "\"mop\","
-                    "\"sparyer\","
-                    "\"aspirator\","
-                    "\"brush\""
+                    "\"netInfo\","
+                    "\"ota\""
                 "]"
             "}"
-        }   
+        }
        // {"reportService", 0, ""}
     };
 
@@ -282,10 +341,85 @@ jsonTL_t* getService(u8 idx)
 jsonTL_t* getHeartbeat(void)
 {
     static jsonTL_t heartbeat[] = {
-        {"\"heartbeat\"",0,""}
+        {"heartbeat",0,""}
     };
     return (&heartbeat[0]);
 }
+
+jsonTL_t* getConnectWifi(u8 idx)
+{
+    static jsonTL_t ConnectWifiArr[] = {
+        {
+            "connectWifi", 0,
+            "{"
+            "\"ssid\":\"hilink_production_test\","
+            "\"password\":\"12345678\""
+            "}"
+        }
+    };
+    if (idx >= MTABSIZE(ConnectWifiArr)) {
+        return (NULL);
+    }
+
+    return (&ConnectWifiArr[idx]);
+}
+
+/**
+ * send all data at once 
+ * make sure the length of string is less than length of FIFO buff
+ **/
+void sm_sendData_once(jsonTL_t* jp)
+{
+    u8Data_t u8Data;
+    u8 buf[8];
+    int len = 0;
+    int send_count = 0;
+
+    if (jp == NULL) {
+        return;
+    }
+    
+    /** hhhhhhhhh head **/
+    len = strlen(jp->jHead);
+    for (int i = 0; i < len; i++) {
+        u8Data.u8Val = jp->jHead[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+    u8Data.u8Val = ',';
+    u8FIFOin_irq(&g_uart2TxQue, &u8Data); 
+    
+    /** lllllllll length **/
+    len = strlen(jp->jBody);
+    if (strchr(jp->jBody, '\n')) {
+        len--;
+    }
+    if (sprintf(buf, "%d", len)) {
+        for (int i = 0; i < strlen(buf); i++) {
+            u8Data.u8Val = buf[i];
+            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+        }
+    }
+    
+    if (len > 0) {
+        u8Data.u8Val = ',';
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    } else { /** len == 0, nobody need transmit **/
+        u8Data.u8Val = '\n';
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+        return;
+    }
+    /** bbbbbbbbb body **/
+    for (send_count = 0; ((send_count < len) && (send_count < Mu8FIFO_bufLen(&g_uart2TxQue))); send_count++) {
+        u8Data.u8Val = jp->jBody[send_count];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+
+    if (send_count >= len) {               /** the last transmit part **/
+        u8Data.u8Val = '\n';
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+}
+
 
 /**
  * state machine
@@ -296,7 +430,7 @@ jsonTL_t* getHeartbeat(void)
  * sm_step: send data body(< 60 byte) again and again(CMSG_UART3TX)
  * sm_end: send over
  *
- * note: send data the length of g_uart3TxQue buf
+ * note: send data the length of g_uart2TxQue buf
  **/
 void sm_sendData(jsonTL_t* jp)
 {
@@ -325,22 +459,16 @@ void sm_sendData(jsonTL_t* jp)
         u8FIFOin_irq(&g_uart2TxQue, &u8Data); 
         
         /** lllllllll length **/
-         #if 1
         len = strlen(p->jBody);
+        if (strchr(p->jBody, '\n')) {
+            len--;
+        }
         if (sprintf(buf, "%d", len)) {
             for (int i = 0; i < strlen(buf); i++) {
                 u8Data.u8Val = buf[i];
                 u8FIFOin_irq(&g_uart2TxQue, &u8Data);
             }
         }
-        #else
-        if( (len >> 8) & 0xff) {   /** over 255, then high 8-bit first **/
-            u8Data.u8Val = (len >> 8) & 0xff;
-            u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        }
-        u8Data.u8Val = len & 0xff;
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        #endif
         
         if (len > 0) {
             u8Data.u8Val = ',';
@@ -352,7 +480,7 @@ void sm_sendData(jsonTL_t* jp)
             return;
         }
         /** bbbbbbbbb body **/
-        for (int i = 0; ((i < len) && (i < (U8FIFOSIZE - 32))); i++, total++) {
+        for (int i = 0; ((i < len) && (i < (Mu8FIFO_bufLen(&g_uart2TxQue) - 32))); i++, total++) {
             u8Data.u8Val = p->jBody[i];
             u8FIFOin_irq(&g_uart2TxQue, &u8Data);
         }
@@ -363,12 +491,14 @@ void sm_sendData(jsonTL_t* jp)
             return; 
         }
         len = strlen(p->jBody);
-        for (int i = 0; ((total < len) && (i < U8FIFOSIZE)); i++, total++) {
+        for (int i = 0; ((total < len) && (i < Mu8FIFO_bufLen(&g_uart2TxQue) - 1)); i++, total++) {
             u8Data.u8Val = p->jBody[total];
             u8FIFOin_irq(&g_uart2TxQue, &u8Data);
         }
 
         if (total >= len) {               /** the last transmit part **/
+            u8Data.u8Val = '\n';
+            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
             s_smStatus = sm_end;
         }
     } else if (s_smStatus == sm_end) {   /** transmit over **/
@@ -380,6 +510,37 @@ void sm_sendData(jsonTL_t* jp)
     }
 }
 
+#if 0
+void reportTest(void)
+{
+    u8 buf[] = {0xA5, 0x5A, 0x01, 0x13, 0x00, 0x05, 0x00, 0xA, 0x00, 0x01, 0x00, 0x23}; /** C8138 module test req(12-bytes) **/
+
+    u8Data_t u8Data;
+    for (int i = 0; i < MTABSIZE(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+
+}
+
+int checkResponseTest(u8* str)
+{
+	  int i = 0;
+    u8 buf[] = {0x5A, 0xA5, 0x01, 0x10, 0x00, 0x06, 0x00, 0xA, 0x00, 0x02, 0x00, 0x00}; /** C8138 module test response(12-bytes) **/
+    for (i = 0; i < MTABSIZE(buf); i++) {
+        if (buf[i] != str[i]) {
+            break;
+        }
+    }
+
+    if (i >= MTABSIZE(buf)) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+#endif
+
 /********************************
  * enrolled key 
  ********************************/
@@ -389,7 +550,12 @@ const jsonTL_t commandKeyArr[] = {
     {"putChar", 0, NULL, NULL},      /** 命令下发！长度不定 **/
     {"getChar", 0, NULL, NULL},      /** 查询单个服务状态！ 长度不定  **/
     {"reportService,", 0, NULL, NULL},      /** 查询单个服务状态！ 长度不定  **/
-    {"getWifiStatus,", 1, NULL, NULL},
+    {"scanWifi", 0, NULL, NULL},        /** production test ack of scanwifi **/
+    {"connectWifi", 0, NULL, NULL},     /** production test ack of connect action **/
+    {"getRssi", 0, NULL, NULL},         /** production test ack of getRssi action **/
+    {"putWifiStatus", 0, NULL, NULL},   /** the command description !!! **/
+    {"getWifiStatus", 0, NULL, NULL},   /** the command description !!! **/
+    {"resetNet", 0, NULL, NULL},        /** reset net and configure net !!! **/
     // {"\xa5\x5a\x01\x10\x00\x06\x00\x0A\x00\x02", 0, NULL, NULL},
     // {"\"getDevInfo\"", 0},   /**  **/
     // {"\"heartbeat\"", 0},    /** 下发心跳！长度为0 **/
@@ -455,9 +621,9 @@ objType_t sm_receiveData(u8 *data)
              **/
             s_smStatus = sm_receiveLenStep2;
             return obj_key;
-        } else {
+        }else {
+            #if 0
             /** !!! wifi module working verify!!! **/
-            #if 0  // ????????????????????????
             if (checkResponseTest(data)) {
                 s_smStatus = sm_receiveBody;
                 s_bodyLen = 2;
@@ -468,7 +634,7 @@ objType_t sm_receiveData(u8 *data)
     } else if (s_smStatus == sm_receiveLenStep2) {    /** identifing length  **/
         if ((chData == ' ') || (chData == '\t')) { // ignore the blank and tab
             return obj_none;
-        } else if (isdigit(chData)) {
+        } else if (isdigit(chData)) {   // the valid number
             s_bodyLen = (s_bodyLen * 10) + (chData - '0');
         } else if (chData == ',') {
             sprintf(data, "%d", s_bodyLen);
@@ -490,14 +656,18 @@ objType_t sm_receiveData(u8 *data)
                 msgq_in_irq(&g_msgq, &msg);
                 
                 return obj_none;
+            } else {
+                /** end transmit but invalid data **/
             }
         }
         return obj_none;
     } else if (s_smStatus == sm_receiveBody) {    /** identifing body **/
         // ??????????????????????????????
         #if 0
+            u8Data.u8Val = '!';
+            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
             u8Data.u8Val = chData;
-            u8FIFOin_irq(&g_uart3TxQue, &u8Data);
+            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
         #endif
         // ??????????????????????????????
         /** offset: start of head, end of len **/
@@ -505,6 +675,7 @@ objType_t sm_receiveData(u8 *data)
             return obj_none;
         }
         if (chData == '\n') {
+            ClrTimer_irq(&g_timer[1]);
             u8FIFOinit_irq(&g_uart2RxQue);
             s_smStatus = sm_init;   // over 
            
@@ -526,25 +697,94 @@ objType_t sm_receiveData(u8 *data)
                 msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
             } else if(MisGetCharMopStatus(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGET_CHAR;
+                msg.msgType = CGETCHAR_MOP;
                 msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
+
+            } else if(MisGetCharMopStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_MOP;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharRollerStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_ROLLER;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharClearWaterStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_CLEARWATER;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharPumpStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_PUMP;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharBatteryStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_BATTERY;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharChargeStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_CHARGE;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharNetInfoStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_NETINFO;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisGetCharUpdateStatus(s_keyIdx, s_bodyLen, data)) {
+                msg.msgType = CGETCHAR_UPDATE;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+
             } else if(MisPutChar(s_keyIdx)) {
                 msg.msgType = CPUT_CHAR;
                 msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
             } else if(MisgetWifiStatus(s_keyIdx)) {
                 msg.msgType = CWIFI_STATUS;
                 msgq_in_irq(&g_msgq, &msg);
-                
+                return obj_none;
+            } else if(MisScanWifi(s_keyIdx)) {
+                /** need one global variety store the rssi **/
+                msg.msgValue = s_bodyLen;
+                msg.msgType = CSCAN_WIFI;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisconnectWifi(s_keyIdx)) {
+                /** need one global variety store the connection status **/
+                msg.msgType = CCONN_WIFI;
+                msgq_in_irq(&g_msgq, &msg);
+                return obj_none;
+            } else if(MisResetNet(s_keyIdx)) {
+                if (MisRespOk(s_bodyLen, data)) {
+                    msg.msgType = CRESETNET_RSPOK;
+                    msgq_in_irq(&g_msgq, &msg);
+                    return obj_none;
+                } else if (MisRespFail(s_bodyLen, data)) {
+                    msg.msgType = CRESETNET_RSPFAIL;
+                    msgq_in_irq(&g_msgq, &msg);
+                    return obj_none;
+                }
             }
             return obj_body;
         }
 
-        if (MisTestWifiResponse(s_keyIdx, s_bodyLen, data)) {
-            msg.msgType = CWIFI_TEST;
-            msgq_in_irq(&g_msgq, &msg);    
+        if (u8FIFOisFull(&g_uart2RxQue) == TRUE) {
+            /** warning...  buf full **/
+            u8Data.u8Val = 'F';
+            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+        } else {
+            // ??????????????????????????????
+            #if 0
+            u8Data.u8Val = '!';
+            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+            u8Data.u8Val = chData;
+            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+            u8Data.u8Val = g_uart2RxQue.in;
+            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+            u8Data.u8Val = g_uart2RxQue.out;
+            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+            #endif
+           // ??????????????????????????????
         }
-            
         if (u8FIFOlength(&g_uart2RxQue) >= (s_bodyLen + offset + 1)      /** strlen(",x,") + the "" end of body + the \n end of body **/) {
             u8FIFOinit_irq(&g_uart2RxQue);
             s_smStatus = sm_init;   // over 
@@ -559,9 +799,10 @@ objType_t sm_receiveData(u8 *data)
     return obj_none;
 }
 
+#if 0
 int sm_receiveDataLen(const u8FIFO_t *que, u8 *data)
 {
-    return 0;
+    
 }
 
 void CmdProcess(u8* CommId)
@@ -572,49 +813,5 @@ void CmdProcess(u8* CommId)
         //}
     }
 }
-
-/*******************************************************************************
- * prase json body(JsonParseL0)
- * 
- * example:
- * {key1:value1, key2:value2, ... ,keyn:valuen}
- *******************************************************************************/
-unsigned char JsonParseL0(unsigned char* jsonstrbuf, kv_t* jsonstcarr)
-{
-    u8 j_u8,k_u8,i_u8 = 0;
-    char *p[CMAX1_COUPLE * 2];
-    char *pChar = jsonstrbuf;
-    jsonstcarr[0].KVIndex = 0;
-    u8Data_t u8Data;
-
-    /** 1. simily as '{ ... }'! **/
-    if((jsonstrbuf[0] != '{') || (jsonstrbuf[strlen(jsonstrbuf) - 1] != '}')) {
-        return(0);
-    }
-
-    jsonstrbuf[strlen(jsonstrbuf) - 1] = '\0';            /** overwrite the start '}' ! **/
-    for(j_u8 = 0; j_u8 < strlen(jsonstrbuf); j_u8++) {    /** overwrite the end '{' ! **/
-        jsonstrbuf[j_u8] = jsonstrbuf[j_u8 + 1];
-    }
-    
-    while((p[i_u8]  = strtok(pChar, ":,")) != NULL) {    /** split the string ... **/
-        i_u8++;
-        pChar = NULL;
-    }
- 
-    for(j_u8 = 0; ((j_u8 < i_u8/2) && (j_u8 < CMAX1_COUPLE)); j_u8++) {
-        jsonstcarr[j_u8].KVIndex = i_u8/2 - j_u8;
-        strcpy(jsonstcarr[j_u8].key, p[j_u8 * 2]);
-        strcpy(jsonstcarr[j_u8].value, p[j_u8 * 2 + 1]);
-
-        //(void)strim_quot(jsonstcarr[j_u8].key);
-        jsonstcarr[j_u8].key[strlen(jsonstcarr[j_u8].key) - 1] = '\0';           /** overwrite the start '"' ? **/
-        for(k_u8 = 0; k_u8 < strlen(jsonstcarr[j_u8].key); k_u8++)                 /** overwrite the end '"' ? **/
-        {
-            jsonstcarr[j_u8].key[k_u8] = jsonstcarr[j_u8].key[k_u8 + 1];
-        }
-    }
-
-    return (1);
-}
+#endif
 

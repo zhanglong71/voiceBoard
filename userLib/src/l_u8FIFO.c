@@ -33,7 +33,7 @@ int u8FIFOlength(u8FIFO_t *q)
 /*******************************************************************************
  * check is the FIFO full
  *******************************************************************************/
-static int u8FIFOisFull(u8FIFO_t *q)
+int u8FIFOisFull(const u8FIFO_t *q)
 {
 	if((q->in + 1 == q->out) || (((q->in + 1) % U8FIFOSIZE) == q->out))
 	{

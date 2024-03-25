@@ -166,7 +166,7 @@ int sysProcess(void *pMsg)
         break;
 
     case CGET_CHAR:
-    #if 1
+    #if 0
         (void)reportGetCharCmd(NULL);
     #endif
         break;
