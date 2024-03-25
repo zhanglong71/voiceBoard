@@ -6,6 +6,7 @@
 #include "l_arch.h"
 #include "l_gpio.h"
 #include "l_u8FIFO.h"
+#include "l_rs485.h"
 #include "l_jsonTL.h"
 #include "l_actionFIFO.h"
 #include "l_sysProcess.h"

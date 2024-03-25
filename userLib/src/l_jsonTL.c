@@ -3,7 +3,6 @@
 #include "ptype.h"
 #include "macro.h"
 #include "global.h"
-#include "version.h"
 
 #include "l_arch.h"
 #include <string.h>
@@ -16,28 +15,7 @@
 #include "l_jsonTL.h"
 #include "l_rs485.h"
 // #include "main.h"
-/**********************************************************************************************/
-RetStatus reportVersion(void)
-{
-    u8 i = 0;
-    u8Data_t u8Data;
-    u8 buf[32];
-    RetStatus retStatus = POK;
-    
-    //sprintf(buf, "voice softVER:202403201423.%s" CVERSION);
-    sprintf(buf, "%s.%s.%s.%s", CBOARD, CWARE, CDATETIME, CVERSION);
 
-    for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {
-        u8Data.u8Val = buf[i];
-        retStatus = rs485_stor_irq(&u8Data);
-        if (retStatus != POK) {
-            return retStatus;
-        }
-    }
-    return retStatus;
-}
-
-/**********************************************************************************************/
 int doNothing(unsigned *arg)
 {
     (void)arg;
@@ -402,37 +380,6 @@ void sm_sendData(jsonTL_t* jp)
     }
 }
 
-#if 0
-void reportTest(void)
-{
-    u8 buf[] = {0xA5, 0x5A, 0x01, 0x13, 0x00, 0x05, 0x00, 0xA, 0x00, 0x01, 0x00, 0x23}; /** C8138 module test req(12-bytes) **/
-
-    u8Data_t u8Data;
-    for (int i = 0; i < MTABSIZE(buf); i++) {
-        u8Data.u8Val = buf[i];
-        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    }
-
-}
-
-int checkResponseTest(u8* str)
-{
-	  int i = 0;
-    u8 buf[] = {0x5A, 0xA5, 0x01, 0x10, 0x00, 0x06, 0x00, 0xA, 0x00, 0x02, 0x00, 0x00}; /** C8138 module test response(12-bytes) **/
-    for (i = 0; i < MTABSIZE(buf); i++) {
-        if (buf[i] != str[i]) {
-            break;
-        }
-    }
-
-    if (i >= MTABSIZE(buf)) {
-        return TRUE;
-    }
-
-    return FALSE;
-}
-#endif
-
 /********************************
  * enrolled key 
  ********************************/
@@ -659,15 +606,6 @@ unsigned char JsonParseL0(unsigned char* jsonstrbuf, kv_t* jsonstcarr)
         jsonstcarr[j_u8].KVIndex = i_u8/2 - j_u8;
         strcpy(jsonstcarr[j_u8].key, p[j_u8 * 2]);
         strcpy(jsonstcarr[j_u8].value, p[j_u8 * 2 + 1]);
-        /**********/
-        #if 0
-        for(k_u8 = 0; k_u8 < strlen(jsonstcarr[j_u8].value); k_u8++)                 /** overwrite the end '"' ! **/
-        {
-            u8Data.u8Val = jsonstcarr[j_u8].value[k_u8];
-            u8FIFOin_irq(&g_uart1TxQue, &u8Data);//????????????????????????????
-        }
-	    #endif
-        /**********/ 
 
         //(void)strim_quot(jsonstcarr[j_u8].key);
         jsonstcarr[j_u8].key[strlen(jsonstcarr[j_u8].key) - 1] = '\0';           /** overwrite the start '"' ? **/
@@ -676,176 +614,7 @@ unsigned char JsonParseL0(unsigned char* jsonstrbuf, kv_t* jsonstcarr)
             jsonstcarr[j_u8].key[k_u8] = jsonstcarr[j_u8].key[k_u8 + 1];
         }
     }
-    /**********/
-    #if 0
-    j_u8 = 1;
-    for(k_u8 = 0; k_u8 < 10; k_u8++)                 /** overwrite the end '"' ! **/
-    {
-        u8Data.u8Val = jsonstcarr[j_u8].value[k_u8];
-        u8FIFOin_irq(&g_uart1TxQue, &u8Data);//????????????????????????????
-    }
 
-    #endif
-    /**********/ 
     return (1);
 }
-
-/*********************************************
- * {"voi":xxx,"ver":vxxxx}
- *********************************************/
-void generateVoiceAckVer(u8* to, u8* ver)
-{
-    u8 i = 0;
-    u8Data_t u8Data;
-    u8 buf[32];
-    
-    sprintf(buf, "{\"voi\":%s,\"ver\":%s}", to, ver);
-
-    for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {
-        u8Data.u8Val = buf[i];
-        rs485_stor_irq(&u8Data);
-    }
-}
-
-
-/*********************************************
- * {"voi":xxxx,"PLY":OK}
- * {"voi":xxxx,"PLY":err}
- *********************************************/
- #if 0
-void generateVoiceAckOk(u8* to)
-{
-    u8 i = 0;
-    u8Data_t u8Data;
-    u8 buf[32];
-    
-    sprintf(buf, "{\"voi\":%s,\"PLY\":OK}", to);
-
-    for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {
-        u8Data.u8Val = buf[i];
-        //u8FIFOin_irq(&g_uart1TxQue, &u8Data);
-        rs485_stor_irq(&u8Data);
-    }
-}
- #else
- void generateVoiceAckOk(char* to, u8 seq)
-{
-    u8 i = 0;
-    u8Data_t u8Data;
-    u8 buf[64];
-    
-    sprintf(buf, "{\"voi\":%s,\"PLY\":OK,\"SEQ\":%d}", to, seq);
-
-    for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {
-        u8Data.u8Val = buf[i];
-        //u8FIFOin_irq(&g_uart1TxQue, &u8Data);
-        rs485_stor_irq(&u8Data);
-    }
-}
- #endif
-
- #if 0
-void generateVoiceAckErr(u8* to)
-{
-    u8 i = 0;
-    u8Data_t u8Data;
-    u8 buf[32];
-    
-    sprintf(buf, "{\"voi\":%s,\"PLY\":err}", to);
-
-    for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {
-        u8Data.u8Val = buf[i];
-        //u8FIFOin_irq(&g_uart1TxQue, &u8Data);
-        rs485_stor_irq(&u8Data);
-    }
-}
- #else
- void generateVoiceAckErr(char* to, u8 seq)
-{
-    u8 i = 0;
-    u8Data_t u8Data;
-    u8 buf[64];
-    
-    sprintf(buf, "{\"voi\":%s,\"PLY\":err,\"SEQ\":%d}", to, seq);
-
-    for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {
-        u8Data.u8Val = buf[i];
-        //u8FIFOin_irq(&g_uart1TxQue, &u8Data);
-        rs485_stor_irq(&u8Data);
-    }
-}
- #endif
-
-/******************************************************************************
- * check kv_t array
- ******************************************************************************/
-u8 isPlayVoiceCommand(kv_t* kv_arr, u8* voi_idx)
-{
-	#if 0
-    u8 flag = 0;
-    for (u8 i = 0; (kv_arr[i]->KVIndex > 0); i++) {
-         if (strstr(kv_arr[i]->value, "voi")) {
-             Mset_bit(flag,1);
-         }
-         if (strstr(kv_arr[i]->key, "PLY")) {
-             Mset_bit(flag,2);
-             *voi_idx = atoi(kv_arr[i]->value);
-         }
-    }
-
-    if (Mget_bit(flag, 1) && Mget_bit(flag, 2)) {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-	#endif
-}
-
-/*******************************************************************************
- * prase json body(JsonParseL0V2)
- * 
- * example:
- * {key1:value1, key2:value2, ... ,keyn:valuen}
- *******************************************************************************/
- #if 0
-unsigned char JsonParseL0V2(unsigned char* jsonstrbuf, JsonArr* jsonstcarr)
-{
-    u8 j_u8,k_u8,i_u8 = 0;
-    char *p[12];
-    char *pChar = jsonstrbuf;
-    jsonstcarr[0].jIndexN = 0;
-
-    /** 1. simily as '{ ... }'! **/
-    if((jsonstrbuf[0] != '{') || (jsonstrbuf[strlen(jsonstrbuf) - 1] != '}')) {
-        return(0);
-    }
-    
-    jsonstrbuf[strlen(jsonstrbuf) - 1] = '\0';            /** overwrite the start '}' ! **/
-    for(j_u8 = 0; j_u8 < strlen(jsonstrbuf); j_u8++) {    /** overwrite the end '{' ! **/
-        jsonstrbuf[j_u8] = jsonstrbuf[j_u8 + 1];
-    }
-    
-    while((p[i_u8]  = strtok(pChar, ",")) != NULL) {    /** split the string by ',' **/
-        i_u8 += 2;
-        pChar = NULL;
-    }
-    for(j_u8 = 0; j_u8 < i_u8/2; j_u8++) {
-        pChar = p[j_u8 * 2];
-        while ((p[j_u8 * 2 + 1]  = strtok(pChar, ":")) != NULL) {
-            pChar = NULL;
-        }
-        
-        jsonstcarr[j_u8].jIndexN = i_u8/2 - j_u8;
-        strcpy(jsonstcarr[j_u8].jName, p[j_u8 * 2]);
-        strcpy(jsonstcarr[j_u8].jValue, p[j_u8 * 2 + 1]);
-
-        jsonstcarr[j_u8].jName[strlen(jsonstcarr[j_u8].jName) - 1] = '\0';           /** overwrite the start '"' ! **/
-        for(k_u8 = 0; k_u8 < strlen(jsonstcarr[j_u8].jName); k_u8++)                 /** overwrite the end '"' ! **/
-        {
-            jsonstcarr[j_u8].jName[k_u8] = jsonstcarr[j_u8].jName[k_u8 + 1];
-        }
-    }
-    return (1);
-}
- #endif
 

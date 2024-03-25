@@ -8,4 +8,9 @@ void rs485actProcess(void);
 void rs485TransXDoing(void);
 void rs485actOver(void);
 
+RetStatus reportVersion(void);
+void generateVoiceAckVer(char* to, u8* ver);
+void generateVoiceAckOk(char* to, u8 seq);
+void generateVoiceAckErr(char* to, u8 seq);
+
 #endif

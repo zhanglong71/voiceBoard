@@ -23,6 +23,8 @@ int sysProcess(void *pMsg)
     //u8 pCh = NULL;
     kv_t KVarr[CKVTABSIZE];
     // u8 len = 0;
+    u8 i = 0;
+
     switch(((msg_t *)pMsg)->msgType)
     {
     case CMSG_UART2RX:
@@ -69,7 +71,7 @@ int sysProcess(void *pMsg)
          ************************************/
         memset(buf, 0, sizeof(buf));
         memset(KVarr, 0, sizeof(KVarr));
-        u8 i = 0;
+        
  #if 1
         for(i = 0; ((i < MTABSIZE(buf)) && (u8FIFOout_irq(&g_uart1RxQue, &u8Data) == TRUE)); i++) {
             buf[i] = u8Data.u8Val;

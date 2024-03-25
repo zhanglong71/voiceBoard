@@ -1,8 +1,10 @@
 #include "hk32f0301mxxc_it.h"
+#include <string.h>
 #include "CONST.h"
 #include "ptype.h"
 #include "macro.h"
 #include "global.h"
+#include "version.h"
 
 #include "l_arch.h"
 #include "l_u8FIFO.h"
@@ -121,5 +123,80 @@ void rs485actOver(void)
         break;
 	}
 #endif
+}
+
+/**********************************************************************************************/
+RetStatus reportVersion(void)
+{
+    u8 i = 0;
+    u8Data_t u8Data;
+    char buf[32];
+    RetStatus retStatus = POK;
+    
+    //sprintf(buf, "voice softVER:202403201423.%s" CVERSION);
+    sprintf(buf, "%s.%s.%s.%s", CBOARD, CWARE, CDATETIME, CVERSION);
+
+    for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {
+        u8Data.u8Val = buf[i];
+        retStatus = rs485_stor_irq(&u8Data);
+        if (retStatus != POK) {
+            return retStatus;
+        }
+    }
+    return retStatus;
+}
+
+/**********************************************************************************************/
+
+/*********************************************
+ * {"voi":xxx,"ver":vxxxx}
+ *********************************************/
+void generateVoiceAckVer(char* to, u8* ver)
+{
+    u8 i = 0;
+    u8Data_t u8Data;
+    char buf[32];
+    
+    sprintf(buf, "{\"voi\":%s,\"ver\":%s}", to, ver);
+
+    for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {
+        u8Data.u8Val = buf[i];
+        rs485_stor_irq(&u8Data);
+    }
+}
+
+
+/*********************************************
+ * {"voi":xxxx,"PLY":OK}
+ * {"voi":xxxx,"PLY":err}
+ *********************************************/
+ void generateVoiceAckOk(char* to, u8 seq)
+{
+    u8 i = 0;
+    u8Data_t u8Data;
+    char buf[64];
+    
+    sprintf(buf, "{\"voi\":%s,\"PLY\":OK,\"SEQ\":%d}", to, seq);
+
+    for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {
+        u8Data.u8Val = buf[i];
+        //u8FIFOin_irq(&g_uart1TxQue, &u8Data);
+        rs485_stor_irq(&u8Data);
+    }
+}
+
+ void generateVoiceAckErr(char* to, u8 seq)
+{
+    u8 i = 0;
+    u8Data_t u8Data;
+    char buf[64];
+    
+    sprintf(buf, "{\"voi\":%s,\"PLY\":err,\"SEQ\":%d}", to, seq);
+
+    for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {
+        u8Data.u8Val = buf[i];
+        //u8FIFOin_irq(&g_uart1TxQue, &u8Data);
+        rs485_stor_irq(&u8Data);
+    }
 }
 
