@@ -5,6 +5,7 @@
 #include "global.h"
 
 #include "l_arch.h"
+#include <ctype.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -44,7 +45,7 @@ int reportResetNet(u8 idx)
 {
     static jsonTL_t resetNetArr[] = {
         { "resetNet", 2,"AP"},   /** reset net and config net with AP **/
-        { "resetNet", 3,"BLE"},  /** reset net and config net with BLE **/
+        //{ "resetNet", 3,"BLE"},  /** reset net and config net with BLE **/
     };
     if (idx >= MTABSIZE(resetNetArr)) {
         return (FALSE);
@@ -67,7 +68,17 @@ int reportScanWifi(void *arg)
     return (TRUE);
 }
 
-#if 1   // !!! 
+void reportAckPutSync(void)
+{
+    u8Data_t u8Data;
+    u8 buf[] = "putSync,0\n";
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+}
+
+#if 0   // !!! 
 int reportConnectWifi(void *arg)
 {
     (void)arg;
@@ -77,15 +88,13 @@ int reportConnectWifi(void *arg)
 }
 #endif
 
-
-
 const static reportStatusBody_t reportStatusBodyArr[] = {
     { CINDEX_UNKNOW,              "{\"mop\":{\"status\":0}}"},             // unknow 未知状态(主机断开及其它)
     { CINDEX_STANDBY,             "{\"mop\":{\"status\":1}}"},             // standby 待机
     { CINDEX_STANDARD,            "{\"mop\":{\"status\":2}}"},                   // standard 标准模式
     { CINDEX_HIGHPOWER,           "{\"mop\":{\"status\":3}}"},                   // highPower强力模式
-    { CINDEX_RINSE,               "{\"mop\":{\"status\":4}}"},                   // rinse 大水冲洗模式
-    { CINDEX_CLEANING,            "{\"mop\":{\"status\":5}}"},                   // cleaning 自清洗模式
+    // { CINDEX_RINSE,               "{\"mop\":{\"status\":4}}"},                   // rinse 大水冲洗模式
+    // { CINDEX_CLEANING,            "{\"mop\":{\"status\":5}}"},                   // cleaning 自清洗模式
     
     { CINDEX_ROLLERNORMAL,        "{\"roller\":{\"status\":1}}"},                // normal 滚筒电机正常
     { CINDEX_ROLLEROVERLOAD,      "{\"roller\":{\"status\":2}}"},                // error 滚筒电机故障
@@ -93,9 +102,9 @@ const static reportStatusBody_t reportStatusBodyArr[] = {
     { CINDEX_CLEARWATERNORMAL,    "{\"clearWater\":{\"status\":1}}"},             // clear water normal 清水正常
     { CINDEX_CLEARWATERSHORTAGE,  "{\"clearWater\":{\"status\":2}}"},             // clear water shortage 清水不足
     
-    { CINDEX_PUMPNORMAL,          "{\"pump\":{\"status\":1}}"},                  // 水泵正常     pumpNormal
-    { CINDEX_PUMPOVERLOAD,        "{\"pump\":{\"status\":2}}"},                  // 水泵过载     pumpOverload
-    { CINDEX_PUMPCURRENTSMALL,    "{\"pump\":{\"status\":3}}"},                  // 水泵电流过小 pumpCurrentTooSmall
+    // { CINDEX_PUMPNORMAL,          "{\"pump\":{\"status\":1}}"},                  // 水泵正常     pumpNormal
+    // { CINDEX_PUMPOVERLOAD,        "{\"pump\":{\"status\":2}}"},                  // 水泵过载     pumpOverload
+    // { CINDEX_PUMPCURRENTSMALL,    "{\"pump\":{\"status\":3}}"},                  // 水泵电流过小 pumpCurrentTooSmall
     
     { CINDEX_BATTERYNORMAL,       "{\"batterystatus\":{\"status\":1}}"},      // 电池电压在正常范围
     { CINDEX_BATTERYLOW,          "{\"batterystatus\":{\"status\":2}}"},      // 电池电压过低
@@ -180,6 +189,64 @@ int reportBatteryLevel(u8 arg)
     return (TRUE);
 }
 
+int reportgetCharNetInfo(NetInfo_t* netInfo)
+{
+    jsonTL_t jsonTypeTx;
+    u8 buf[128]; 
+    u8 len = 0;
+    u8Data_t u8Data;
+    u8 idx = 0;
+
+    if (netInfo == NULL) {
+        return (FALSE);
+    }
+
+    for (idx = 0; idx < MTABSIZE(reportStatusBodyArr); idx++) {
+        if (reportStatusBodyArr[idx].index == CINDEX_NETINFO) {
+            break;
+        }
+    }
+    if (idx >= MTABSIZE(reportStatusBodyArr)) {
+        return (MTABSIZE(reportStatusBodyArr));
+    }
+
+    jsonTypeTx.jHead = "getChar";
+    jsonTypeTx.jBody = buf;
+    jsonTypeTx.jLen = strlen(buf);
+    
+    /** hhhhhhhhh head **/
+    len = strlen(jsonTypeTx.jHead);
+    for (int i = 0; i < len; i++) {
+        u8Data.u8Val = jsonTypeTx.jHead[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+    u8Data.u8Val = ',';
+    u8FIFOin_irq(&g_uart2TxQue, &u8Data); 
+    
+    /** lllllllll length **/
+    sprintf(buf, reportStatusBodyArr[idx].body, netInfo->ip, netInfo->rssi, netInfo->ssid);
+    len = strlen(buf);
+    if (sprintf(buf, "%d", len)) {
+        for (int i = 0; i < strlen(buf); i++) {
+            u8Data.u8Val = buf[i];
+            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+        }
+    }
+    u8Data.u8Val = ',';
+    u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    
+    /** bbbbbbbbb body **/
+    sprintf(buf, reportStatusBodyArr[idx].body, netInfo->ip, netInfo->rssi, netInfo->ssid);
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+
+    u8Data.u8Val = '\n';
+    u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    return (TRUE);
+}
+
 /***********************************************************************
  * moto/pump/battery/clear/charge
  ***********************************************************************/
@@ -251,6 +318,7 @@ jsonTL_t* getDevInfo(u8 idx)
             //"\"marketName\":\"DIISEA-DM6\","
             "\"brand\":\"滴水科技\"}"
         },
+        #if 0
         {
             "getDevInfo", 0,
             "{\"v\":\"1.0.1\","
@@ -291,6 +359,7 @@ jsonTL_t* getDevInfo(u8 idx)
             "\"marketName\":\"滴水洗地机DM6\","
             "\"brand\":\"滴水科技\"}"
         }
+        #endif
     };
 
     if (idx >= MTABSIZE(jsonTypeDevInfo)) {
@@ -308,7 +377,6 @@ jsonTL_t* getService(u8 idx)
                 "\"sId\":["
                     "\"status\","
                     "\"charge\","
-                    "\"pump\","
                     "\"clearWater\","
                     "\"roller\","
                     "\"batterystatus\","
@@ -319,13 +387,12 @@ jsonTL_t* getService(u8 idx)
                 "\"sType\":["
                     "\"status\","
                     "\"charge\","
-                    "\"pump\","
                     "\"clearWater\","
                     "\"roller\","
                     "\"batterystatus\","
                     "\"mop\","
                     "\"netInfo\","
-                    "\"ota\""
+                    "\"update\""
                 "]"
             "}"
         }
@@ -556,6 +623,11 @@ const jsonTL_t commandKeyArr[] = {
     {"putWifiStatus", 0, NULL, NULL},   /** the command description !!! **/
     {"getWifiStatus", 0, NULL, NULL},   /** the command description !!! **/
     {"resetNet", 0, NULL, NULL},        /** reset net and configure net !!! **/
+    {"getSsid", 0, NULL, NULL},         /** netInfo ssid !!! **/
+    {"getIp", 0, NULL, NULL},           /** netInfo ip !!! **/
+    {"getMac", 0, NULL, NULL},          /** netInfo mac !!! **/
+    {"getRssi", 0, NULL, NULL},         /** netInfo rssi !!! **/
+    {"putSync", 0, NULL, NULL},          /** netInfo mac !!! **/
     // {"\xa5\x5a\x01\x10\x00\x06\x00\x0A\x00\x02", 0, NULL, NULL},
     // {"\"getDevInfo\"", 0},   /**  **/
     // {"\"heartbeat\"", 0},    /** 下发心跳！长度为0 **/
@@ -654,7 +726,10 @@ objType_t sm_receiveData(u8 *data)
             } else if (MisHeartbeatCommand(s_keyIdx) == TRUE) {
                 msg.msgType = CHEART_BEAT;
                 msgq_in_irq(&g_msgq, &msg);
-                
+                return obj_none;
+            } else if (MisPutSync(s_keyIdx) == TRUE) {
+                msg.msgType = CPUT_SYNC;
+                msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
             } else {
                 /** end transmit but invalid data **/
@@ -702,7 +777,7 @@ objType_t sm_receiveData(u8 *data)
                 return obj_none;
 
             } else if(MisGetCharMopStatus(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGETCHAR_MOP;
+                msg.msgType = CGETCHAR_STATUS;
                 msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
             } else if(MisGetCharRollerStatus(s_keyIdx, s_bodyLen, data)) {
@@ -713,10 +788,12 @@ objType_t sm_receiveData(u8 *data)
                 msg.msgType = CGETCHAR_CLEARWATER;
                 msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
+                #if 0  /** D7 no pump status **/
             } else if(MisGetCharPumpStatus(s_keyIdx, s_bodyLen, data)) {
                 msg.msgType = CGETCHAR_PUMP;
                 msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
+                #endif
             } else if(MisGetCharBatteryStatus(s_keyIdx, s_bodyLen, data)) {
                 msg.msgType = CGETCHAR_BATTERY;
                 msgq_in_irq(&g_msgq, &msg);
@@ -739,8 +816,19 @@ objType_t sm_receiveData(u8 *data)
                 msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
             } else if(MisgetWifiStatus(s_keyIdx)) {
-                msg.msgType = CWIFI_STATUS;
-                msgq_in_irq(&g_msgq, &msg);
+                // msg.msgType = CWIFI_STATUS;
+                // msgq_in_irq(&g_msgq, &msg);
+                i = atoi(data);
+                if(MisgetWifiStatusExpect(s_keyIdx, s_bodyLen, i, 1)) {
+                    msg.msgType = CCONN_CLOUD;
+                    msgq_in_irq(&g_msgq, &msg);
+                } else if(MisgetWifiStatusExpect(s_keyIdx, s_bodyLen, i, 8)) {
+                    msg.msgType = CCONN_ROUTE;
+                    msgq_in_irq(&g_msgq, &msg);
+                } else {
+                    msg.msgType = CDISCONN_CLOUD;
+                    msgq_in_irq(&g_msgq, &msg);
+                }
                 return obj_none;
             } else if(MisScanWifi(s_keyIdx)) {
                 /** need one global variety store the rssi **/
@@ -763,6 +851,21 @@ objType_t sm_receiveData(u8 *data)
                     msgq_in_irq(&g_msgq, &msg);
                     return obj_none;
                 }
+            } else if (MisGetSsid(s_keyIdx)) {
+                //if (strlen(data) == s_bodyLen) {
+                //}
+                return obj_SSID;
+            } else if (MisGetIp(s_keyIdx)) {
+                return obj_IP;
+            } else if (MisGetMac(s_keyIdx)) {
+                return obj_MAC;
+            } else if (MisGetRssi(s_keyIdx)) {
+                if (!(MisGetRssiFail(s_keyIdx, s_bodyLen, data))) {
+                    return obj_RSSI;
+                } else { 
+                    // return obj_RSSI;
+                }
+            } else {
             }
             return obj_body;
         }

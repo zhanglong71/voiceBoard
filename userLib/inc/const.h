@@ -110,6 +110,11 @@
 #define CINDEX_CHARGECOMPLETE         (18)
 #define CINDEX_CHARGEFAULT            (19)
 
+#define CINDEX_CONNECTED              (20)
+#define CINDEX_DISCONNECTED           (21)
+#define CINDEX_NETINFO                (22)
+#define CINDEX_UPDATE                (23)
+
 #define CINDEX_TANKINPLACE            (31)
 #define CINDEX_TANKNOTINPLACE         (32)
 #define CINDEX_DORMANCY               (33)

@@ -52,8 +52,8 @@
 #define	MisGetCharBatteryStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 13) && (strstr((body), "batterystatus") != NULL))    /** the index in table commandKeyArr **/
 #define	MisGetCharChargeStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 6) && (strstr((body), "charge") != NULL))    /** the index in table commandKeyArr **/
 #define	MisGetCharNetInfoStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 7) && (strstr((body), "netInfo") != NULL))    /** the index in table commandKeyArr **/
-#define	MisGetCharUpdateStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 7) && (strstr((body), "update") != NULL))    /** the index in table commandKeyArr **/
-#define	MisGetCharStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 7) && (strstr((body), "status") != NULL))    /** the index in table commandKeyArr **/
+#define	MisGetCharUpdateStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 6) && (strstr((body), "update") != NULL))    /** the index in table commandKeyArr **/
+#define	MisGetCharStatus(idx, len, body)  (MisGetChar(idx) && ((len) == 6) && (strstr((body), "status") != NULL))    /** the index in table commandKeyArr **/
 
 #define	MisScanWifi(idx)  ((idx) == 5)       /** the index in table commandKeyArr **/
 #define	MisScanWifiRespFail(idx, len, body) (MisScanWifi(idx) && (MisRespFail(len, body)))
@@ -64,10 +64,20 @@
 
 #define	MisputWifiStatus(idx)  ((idx) == 8)    /** the index in table commandKeyArr **/
 #define	MisgetWifiStatus(idx)  ((idx) == 9)    /** the index in table commandKeyArr **/
+#define	MisgetWifiStatusExpect(idx, len, value, expected)  ((MisgetWifiStatus(idx)) && ((len) == 1) && ((value) == (expected)))   /** the index in table commandKeyArr **/
 
 #define	MisResetNet(idx)  ((idx) == 10)       /** the index in table commandKeyArr **/
 #define	MisResetNetRespOk(idx, len, body)   (MisResetNet(idx) && (MisRespOk(len, body))) 
 #define	MisResetNetRespFail(idx, len, body) (MisResetNet(idx) && (MisRespFail(len, body)))
+
+#define	MisGetSsid(idx)  ((idx) == 11)       /** the index in table commandKeyArr **/
+#define	MisGetIp(idx)    ((idx) == 12)       /** the index in table commandKeyArr **/
+#define	MisGetMac(idx)   ((idx) == 13)       /** the index in table commandKeyArr **/
+
+#define	MisGetRssi(idx)  ((idx) == 14)       /** the index in table commandKeyArr **/
+#define	MisGetRssiFail(idx, len, body)   (MisGetRssi(idx) && (MisRespFail(len, body)))       /** the index in table commandKeyArr **/
+
+#define	MisPutSync(idx)  ((idx) == 15)       /** the index in table commandKeyArr **/
 
 // #define	MisTestWifiResponse(idx, len, body)  (((idx) == CTestWIFIkeyIdx) &&  ((len) == 2) && (strlen(body) == 2))
 

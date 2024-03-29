@@ -82,7 +82,13 @@ rs485transX_t rs485transX;
 
 actionQueue_t g_promptQueue;
 u8 g_IT_uart1_tmr = 0; // used uart1 received timeover
+/******************************************************************************/
+NetInfo_t g_netInfo;
+/**
+ * record wifi net information
+ **/
 
+/******************************************************************************/
 #endif 
 /**
   * @brief  Main program.

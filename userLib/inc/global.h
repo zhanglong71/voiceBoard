@@ -23,6 +23,8 @@ extern actionQueue_t g_promptQueue;
 
 extern u8 g_IT_uart1_tmr;
 
+extern NetInfo_t g_netInfo;
+
 #if 0
 extern	u8	g_IT_flag;
 extern  int g_tmr_iVopBusy;

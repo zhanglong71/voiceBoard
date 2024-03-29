@@ -151,17 +151,6 @@ void UART1_IRQHandler(void)
         UART_ITConfig(UART1, UART_IT_TC, DISABLE);
         M485TR_R("发送结束，设置成为接收");
 	}
-
-	#if 0
-	if(UART_GetITStatus(UART1, UART_IT_IDLE) != RESET)
-	{
-		UART_ClearITPendingBit(UART1, UART_IT_IDLE);
-		UART_ITConfig(UART1, UART_IT_IDLE, DISABLE);
-		Uart1Rx.Len = Uart1Rx.Index;
-		Uart1Rx.Index = 0;
-		Uart1Rx.FinishedFlag = SET;
-	}
-	#endif
 }
 
 /**
@@ -182,28 +171,7 @@ void UART2_IRQHandler(void)
         msg_t msg;
         msg.msgType = CMSG_UART2RX;     /** message CMSG_UART3RX **/
         msgq_in(&g_msgq, &msg);
-
-    #if 0  	
-    /* receive data */
-    Uart2Rx.Data[Uart2Rx.Index++] = UART_ReceiveData(UART2);
-		
-		if( Uart2Rx.Index == 1 )
-		{
-			UART_ITConfig(UART2, UART_IT_IDLE, ENABLE);
-		}
-		#endif
 	}
-
-  #if 0  	
-	if(UART_GetITStatus(UART2, UART_IT_IDLE) != RESET)
-	{
-		UART_ClearITPendingBit(UART2, UART_IT_IDLE);
-		UART_ITConfig(UART2, UART_IT_IDLE, DISABLE);
-		Uart2Rx.Len = Uart2Rx.Index;
-		Uart2Rx.Index = 0;
-		Uart2Rx.FinishedFlag = SET;
-	}
-	#endif
 }
 
 /**

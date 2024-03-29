@@ -22,7 +22,8 @@ typedef enum {
 } RetStatus;
 
 typedef	int	 (*pfunc_t)(void* arg);
-typedef	void (*paction_t_0)(void);
+typedef	void (*void_paction_void_t)(void);
+//typedef	void (*paction_t_0)(void);
 
 typedef struct func_s {
     pfunc_t func;       /** function **/
@@ -66,15 +67,22 @@ typedef enum {
     CGETCHAR_CHARGE,
     CGETCHAR_NETINFO,
     CGETCHAR_UPDATE,
-    
     CPUT_CHAR,
+    CPUT_SYNC,
     CHEART_BEAT,
     CWIFI_STATUS,
+    CCONN_ROUTE,
+    CCONN_CLOUD,
+    CDISCONN_CLOUD,
     CSCAN_WIFI,
     
-    CCONN_WIFI,
+    //CCONN_WIFI,
     CWIFI_TEST,
     
+    CCONN_WIFI,
+    CCONNWIFI_RSPOK,
+    CCONNWIFI_RSPFAIL,
+       
     CRESET_NET,
     CRESETNET_RSPOK,
     CRESETNET_RSPFAIL,
@@ -144,6 +152,11 @@ typedef struct pair_u8u8_s {
    u8 first;
    u8 second;
 }pair_u8u8_t;
+
+typedef struct pair_u8vpv_s {
+   u8 first;
+   void_paction_void_t second;
+}pair_u8vpv_t;
 
 #if 0
 typedef struct bitmap_s {
@@ -262,7 +275,11 @@ typedef enum {
     obj_none = 0,
     obj_key,
     obj_len,
-    obj_body
+    obj_body,
+    obj_SSID,
+    obj_IP,
+    obj_MAC,
+    obj_RSSI,
 } objType_t;
 /*******************************************************************************/ 
 typedef struct _JsonArr
@@ -342,6 +359,21 @@ typedef struct ComponentField_s{
 	u8 charge;
 	u8 clearWater;
 } ComponentField_t;
+
+typedef struct NetInfo_s{
+    char ssid[36];
+    char ip[20];
+    char mac[20];
+    int rssi;
+    int flag;
+    /** 
+     * flag: updated or not
+     * bit 0: ssid
+     * bit 1: ip
+     * bit 2: mac
+     * bit 3: rssi
+     **/
+} NetInfo_t;
 
 typedef struct reportStatusBody_s{
 	u8 index;
