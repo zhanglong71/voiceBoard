@@ -29,7 +29,7 @@ RetStatus rs485_stor_irq(u8Data_t *u8Data)
 void rs485Init(void)
 {
 	rs485transX.pfifo = &g_uart1TxQue;
-    rs485transX.ptimer = &(g_ustimer[0]);
+    // rs485transX.ptimer = &(g_ustimer[0]);
     rs485transX.sm_status = SM_RS485_IDLE;
     rs485transX.stepMsgType = C485_STEP;
     rs485transX.overMsgType = C485_OVER;
@@ -205,13 +205,13 @@ void generateVoiceAckVer(char* to, u8* ver)
  * example:
  * {key1:value1, key2:value2, ... ,keyn:valuen}
  *******************************************************************************/
-unsigned char JsonParseL0(unsigned char* jsonstrbuf, kv_t* jsonstcarr)
+unsigned char JsonParseL0(char* jsonstrbuf, kv_t* jsonstcarr)
 {
     u8 j_u8,k_u8,i_u8 = 0;
     char *p[CMAX1_COUPLE * 2];
     char *pChar = jsonstrbuf;
     jsonstcarr[0].KVIndex = 0;
-    u8Data_t u8Data;
+    // u8Data_t u8Data;
 
     /** 1. simily as '{ ... }'! **/
     if((jsonstrbuf[0] != '{') || (jsonstrbuf[strlen(jsonstrbuf) - 1] != '}')) {

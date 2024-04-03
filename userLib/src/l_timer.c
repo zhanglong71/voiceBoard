@@ -25,6 +25,7 @@ void TimingDelay_Decrement(void)
     }
 }
 
+#if 0
 void TimingDelayUS_Decrement(void)
 {
 	msg_t msg;
@@ -42,8 +43,8 @@ void TimingDelayUS_Decrement(void)
             }
         }
     }
-    //GPIO_led2_blink(); // ??????????????????????????
 }
+#endif
 
 void TimingDelay_Increment(void)
 {

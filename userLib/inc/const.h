@@ -82,7 +82,7 @@
 #define	CMAX1_COUPLE		6    // the max number of kv couple in one object between master and slave (uart1 communicate)
 
 /*******************************************************************************/
-/** 只要不相同即可 **/
+/**  index for sendto wifi 只要不相同即可 **/
 #define CINDEX_UNKNOW                 (0)
 
 #define CINDEX_STANDBY                (1)
@@ -128,6 +128,27 @@
 #define CINDEX_INVALID (0xff)
 
 /*******************************************************************************/
+/**  index for from wifi 只要不相同即可 **/
+
+#define CINDEX_GETDEVINFO             (0)
+#define CINDEX_HEARTBEAT              (1)  
+#define CINDEX_PUTCHAR                (2)
+#define CINDEX_GETCHAR                (3)
+#define CINDEX_REPORTSERVICE          (4)
+
+#define CINDEX_SCANWIFI               (5)
+#define CINDEX_CONNECTWIFI            (6)
+
+#define CINDEX_GETRSSI                (7)
+#define CINDEX_PUTWIFISTATUS          (8)
+#define CINDEX_GETWIFISTATUS          (9)
+
+#define CINDEX_RESETNET               (10)
+#define CINDEX_GETSSID                (11)
+
+#define CINDEX_GETIP                  (12)
+#define CINDEX_GETMAC                 (13)
+#define CINDEX_PUTSYNC                (14)
 
 /*******************************************************************************/
 #endif

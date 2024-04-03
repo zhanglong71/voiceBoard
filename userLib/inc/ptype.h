@@ -57,7 +57,7 @@ typedef enum {
     
     CREPORT_RSPOK,
     CREPORT_RSPERROR,
-    CGET_CHAR,
+    // CGET_CHAR,
     CGETCHAR_STATUS,
     CGETCHAR_MOP,
     CGETCHAR_ROLLER,
@@ -95,7 +95,6 @@ typedef enum {
     CMSG_UKEY,
     
     CUART1_TOUT,
-    CMSG_MASTER,
     CMSG_UART1RX,
     CMSG_UART1TX,
     CMSG_UART2RX,
@@ -134,29 +133,58 @@ typedef struct Timer_s {
     u16 tick;
     msgType_t msgType;                      /** the type of msg when timeout **/
     //unsigned int count;                   /** Is it necessary ? **/
-}Timer_t; 
+} Timer_t; 
 
 typedef struct jsonTL_s {
 	u8 *jHead;
     u8 jLen;    /** 指定长度! 如果是0，就是不确定 **/
     u8 *jBody;
-    void* arg; /** 收到对应命令的响应动作 或 其它 **/
-}jsonTL_t;
+    // void* arg; /** 收到对应命令的响应动作 或 其它 **/
+} jsonTL_t;
 
 typedef struct {
 	void *var1;
     void *var2;
-}pair_t;
+} pair_t;
 
-typedef struct pair_u8u8_s {
+typedef struct {
    u8 first;
    u8 second;
-}pair_u8u8_t;
+} pair_u8u8_t;
 
-typedef struct pair_u8vpv_s {
+typedef struct {
    u8 first;
    void_paction_void_t second;
-}pair_u8vpv_t;
+} pair_u8vpv_t;
+
+typedef struct {
+   u8  idx;
+   u8* ptr;
+   u8  value;
+} triplet_u8u8pu8_t;
+
+typedef struct {
+   u8  idx;
+   u8  status_idx;
+   u8* ptr;
+   u8  value;
+} Quadruple_u8u8u8pu8_t;
+
+typedef struct {
+   u8 first;
+   char* second;
+} pair_u8s8p_t;
+
+typedef struct {
+   u8 first;
+   msgType_t second;
+} pair_u8msgType_t;
+
+typedef struct {
+   msgType_t first;
+   u8* second;
+} pair_msgType2u8ptr_t;
+
 
 #if 0
 typedef struct bitmap_s {
@@ -353,8 +381,8 @@ typedef enum {
 /*******************************************************************************/
 typedef struct ComponentField_s{
     u8 mop;
-	u8 moto;
-	u8 pump;
+	u8 roller;
+	// u8 pump;
 	u8 battery;
 	u8 charge;
 	u8 clearWater;

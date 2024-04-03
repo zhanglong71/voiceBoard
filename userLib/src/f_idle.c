@@ -18,6 +18,7 @@ int f_idle(void *pMsg)
     {
     case CMSG_TMR:
         g_tick++;
+        reportBatteryLevel(g_tick % 100);  // ?????????????????????????????????? for debug only
         break;
         
     case CMSG_INIT:
@@ -26,7 +27,7 @@ int f_idle(void *pMsg)
 	    break;
           
     case CPMT_OVER:
-        GPIO_VOPPWR_off();
+        // GPIO_VOPPWR_off();
         break;
         
     default:
@@ -59,10 +60,11 @@ int f_init(void *pMsg)
  
     case CSYS_INITS1:      // step2
         SetTimer_irq(&g_timer[0], TIMER_1SEC, CMSG_TMR);
+        actionDelay(TIMER_50MS);
 	    break;
         
     case CPMT_OVER:       // over
-        GPIO_VOPPWR_off();
+        // GPIO_VOPPWR_off();
         fstack_init(&g_fstack);
         func.func = f_idle;
         fstack_push(&g_fstack, &func);

@@ -6,7 +6,7 @@
 extern	fstack_t g_fstack;
 extern	msgq_t  g_msgq;
 extern	Timer_t g_timer[TIMER_NUM];		/** 约定g_timer[0]不用在sysProcess()中， g_timer[1]只用在sysProcess()中 **/
-extern  Timer_t g_ustimer[TIMER_NUM_40US];     /** for 485 transmit only **/
+// extern  Timer_t g_ustimer[TIMER_NUM_40US];     /** for 485 transmit only **/
 
 //extern u8FIFO_t g_uart3TxQue;
 //extern u8FIFO_t g_uart3RxQue;
@@ -24,6 +24,7 @@ extern actionQueue_t g_promptQueue;
 extern u8 g_IT_uart1_tmr;
 
 extern NetInfo_t g_netInfo;
+extern ComponentField_t g_componentStatus;
 
 #if 0
 extern	u8	g_IT_flag;

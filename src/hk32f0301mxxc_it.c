@@ -195,33 +195,27 @@ void TIM2_IRQHandler(void)
     TIM_ClearITPendingBit(TIM2, TIM_IT_CC2);
 
     /* 485 with frequency = 10k Hz */
-    TimingDelayUS_Decrement();
+    // TimingDelayUS_Decrement();
     capture = TIM_GetCapture2(TIM2);
     TIM_SetCompare2(TIM2, capture + CCR2_Val);
-  }
-  
   #if 0
-  else if (TIM_GetITStatus(TIM2, TIM_IT_CC3) != RESET)
-  {
+  } else if (TIM_GetITStatus(TIM2, TIM_IT_CC3) != RESET) {
     TIM_ClearITPendingBit(TIM2, TIM_IT_CC3);
 
     /* LED3 toggling with frequency = 219.7 Hz */
     //HK_EVAL_LEDToggle(LED3);
     capture = TIM_GetCapture3(TIM2);
     TIM_SetCompare3(TIM2, capture + CCR3_Val);
-  }
-  else
-  {
+  } else {
     TIM_ClearITPendingBit(TIM2, TIM_IT_CC4);
 
     /* LED4 toggling with frequency = 439.4 Hz */
     capture = TIM_GetCapture4(TIM2);
     TIM_SetCompare4(TIM2, capture + CCR4_Val);
-  }
   #endif
+  }
 #endif
 }
-
 
 /**
   * @brief  This function handles PPP interrupt request.

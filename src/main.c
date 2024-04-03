@@ -70,7 +70,7 @@
  u16 g_tick;			/** 定时器计数 **/
  u16 g_flag;
  Timer_t g_timer[TIMER_NUM];		/** g_timer[0] for global, g_timer[1] for uart2 receive, g_timer[2] for g_promptQueue **/
- Timer_t g_ustimer[TIMER_NUM_40US];		/** for 485 transmit only **/
+// Timer_t g_ustimer[TIMER_NUM_40US];		/** for 485 transmit only **/
 //u8FIFO_t g_uart3TxQue;
 //u8FIFO_t g_uart3RxQue;
 u8FIFO_t g_uart2TxQue;
@@ -87,7 +87,14 @@ NetInfo_t g_netInfo;
 /**
  * record wifi net information
  **/
-
+/******************************************************************************/
+ComponentField_t g_componentStatus = {CINDEX_STANDBY,  // mop --- standby
+                                      CINDEX_ROLLERNORMAL,  // roller --- 滚筒正常
+                                      // CINDEX_PUMPNORMAL,  // pump --- 水泵正常
+                                      CINDEX_BATTERYNORMAL,  // battery --- 电池正常
+                                      CINDEX_UNCHARGED,  // charge --- 未充电
+                                      CINDEX_CLEARWATERNORMAL   // clearWater --- 清水正常
+                                      };
 /******************************************************************************/
 #endif 
 /**
@@ -132,9 +139,9 @@ int main(void)
     func.func = f_init;
     fstack_push(&g_fstack, &func);
     
-    for(int i = 0; i < MTABSIZE(g_ustimer); i++) {
-        ClrTimer(&g_ustimer[i]);
-    }
+    //for(int i = 0; i < MTABSIZE(g_ustimer); i++) {
+    //    ClrTimer(&g_ustimer[i]);
+    //}
     for(int i = 0; i < MTABSIZE(g_timer); i++) {
         ClrTimer(&g_timer[i]);
     }

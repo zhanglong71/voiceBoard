@@ -25,13 +25,6 @@ int reportDevInfo(unsigned *arg)
     return (TRUE);
 }
 
-int reportHeartbeat(unsigned *arg)
-{
-    (void)arg;
-    jsonTL_t* p = getHeartbeat();
-    sm_sendData_once(p);
-    return (TRUE);
-}
 
 int reportService(unsigned *arg)
 {
@@ -41,39 +34,38 @@ int reportService(unsigned *arg)
     return (TRUE);
 }
 
-int reportResetNet(u8 idx)
+int reportHeartbeat(void)
 {
-    static jsonTL_t resetNetArr[] = {
-        { "resetNet", 2,"AP"},   /** reset net and config net with AP **/
-        //{ "resetNet", 3,"BLE"},  /** reset net and config net with BLE **/
-    };
-    if (idx >= MTABSIZE(resetNetArr)) {
-        return (FALSE);
-    }
-    sm_sendData_once(&(resetNetArr[idx]));
-
-    return (TRUE);
+    u8 buf[] = "heartbeat,0\n";
+    reportNobodyInfo(buf, strlen(buf));
 }
 
-int reportScanWifi(void *arg)
+int reportResetNet(void)
 {
-    (void)arg;
-    u8Data_t u8Data;
-    u8 buf[] = "scanWifi,0\n";
-    for (int i = 0; i < strlen(buf); i++) {
-        u8Data.u8Val = buf[i];
-        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    }
+    u8 buf[] = "resetNet,2,AP\n";
+    reportNobodyInfo(buf, strlen(buf));
+}
 
-    return (TRUE);
+int reportScanWifi(void)
+{
+    u8 buf[] = "scanWifi,0\n";
+    reportNobodyInfo(buf, strlen(buf));
 }
 
 void reportAckPutSync(void)
 {
-    u8Data_t u8Data;
     u8 buf[] = "putSync,0\n";
-    for (int i = 0; i < strlen(buf); i++) {
-        u8Data.u8Val = buf[i];
+    reportNobodyInfo(buf, strlen(buf));
+}
+
+void reportNobodyInfo(char* data, int len)
+{
+    u8Data_t u8Data;
+    if ((data == NULL) || (len <= 0)) {
+        return;
+    }
+    for (int i = 0; ((i < strlen(data)) && (i < len)); i++) {
+        u8Data.u8Val = data[i];
         u8FIFOin_irq(&g_uart2TxQue, &u8Data);
     }
 }
@@ -88,8 +80,8 @@ int reportConnectWifi(void *arg)
 }
 #endif
 
-const static reportStatusBody_t reportStatusBodyArr[] = {
-    { CINDEX_UNKNOW,              "{\"mop\":{\"status\":0}}"},             // unknow 未知状态(主机断开及其它)
+static const reportStatusBody_t reportStatusBodyArr[] = {
+    // { CINDEX_UNKNOW,              "{\"mop\":{\"status\":0}}"},             // unknow 未知状态(主机断开及其它)
     { CINDEX_STANDBY,             "{\"mop\":{\"status\":1}}"},             // standby 待机
     { CINDEX_STANDARD,            "{\"mop\":{\"status\":2}}"},                   // standard 标准模式
     { CINDEX_HIGHPOWER,           "{\"mop\":{\"status\":3}}"},                   // highPower强力模式
@@ -114,31 +106,16 @@ const static reportStatusBody_t reportStatusBodyArr[] = {
     { CINDEX_CHARGING,            "{\"charge\":{\"status\":2}}"},         // 正在充电
     { CINDEX_CHARGECOMPLETE,      "{\"charge\":{\"status\":3}}"},         // 充电完成(区别不充电场景)
     { CINDEX_CHARGEFAULT,         "{\"charge\":{\"status\":4}}"},         // 充电故障
+
+    { CINDEX_NETINFO,             "{\"netInfo\":{\"IP\":%s,\"RSSI\":%d,\"SSID\":%s}}"},         // 网络信息
+    { CINDEX_UPDATE,              "{\"update\":{\"versoin\":1.0.1,\"introduction\":newest,\"progress\":100,\"bootTime\":60}}"},         // 升级信息
+
 };
-
-u8 getIdxbyMode(u8 mode)
-{
-    const static pair_u8u8_t statusNum2IdxArr[] = {
-        {0, CINDEX_UNKNOW},
-        {1, CINDEX_STANDARD},
-        {2, CINDEX_HIGHPOWER},
-        {3, CINDEX_HIGHPOWER},
-        {4, CINDEX_RINSE},     /*** !!!!!! ***/
-        {5, CINDEX_CLEANING},  /*** !!!!!! ***/
-    };
-
-    for (int i = 0; i < MTABSIZE(statusNum2IdxArr); i++) {
-        if ((statusNum2IdxArr[i].first) == mode) {
-            return statusNum2IdxArr[i].second;
-        }
-    }
-    return CINDEX_INVALID;
-}
 
 int reportBatteryLevel(u8 arg)
 {
     jsonTL_t jsonTypeTx;
-    u8 buf[64]; 
+    u8 buf[U8FIFOSIZE]; 
     u8 len = 0;
     u8Data_t u8Data;
     u8 idx = 0;
@@ -153,9 +130,13 @@ int reportBatteryLevel(u8 arg)
     }
 
     jsonTypeTx.jHead = "reportChar";
+    sprintf(buf, reportStatusBodyArr[idx].body, arg);
     jsonTypeTx.jBody =buf;
-    jsonTypeTx.jLen = strlen(buf);
-    
+    jsonTypeTx.jLen = strlen(jsonTypeTx.jBody);
+
+#if 1
+    sm_sendData_once(&jsonTypeTx);
+#else
     /** hhhhhhhhh head **/
     len = strlen(jsonTypeTx.jHead);
     for (int i = 0; i < len; i++) {
@@ -166,7 +147,7 @@ int reportBatteryLevel(u8 arg)
     u8FIFOin_irq(&g_uart2TxQue, &u8Data); 
     
     /** lllllllll length **/
-    sprintf(buf, reportStatusBodyArr[idx].body,  arg);
+    sprintf(buf, reportStatusBodyArr[idx].body, arg);
     len = strlen(buf);
     if (sprintf(buf, "%d", len)) {
         for (int i = 0; i < strlen(buf); i++) {
@@ -178,7 +159,7 @@ int reportBatteryLevel(u8 arg)
     u8FIFOin_irq(&g_uart2TxQue, &u8Data);
     
     /** bbbbbbbbb body **/
-    sprintf(buf, reportStatusBodyArr[idx].body,  arg);
+    sprintf(buf, reportStatusBodyArr[idx].body, arg);
     for (int i = 0; i < strlen(buf); i++) {
         u8Data.u8Val = buf[i];
         u8FIFOin_irq(&g_uart2TxQue, &u8Data);
@@ -187,12 +168,13 @@ int reportBatteryLevel(u8 arg)
     u8Data.u8Val = '\n';
     u8FIFOin_irq(&g_uart2TxQue, &u8Data);
     return (TRUE);
+#endif
 }
 
 int reportgetCharNetInfo(NetInfo_t* netInfo)
 {
     jsonTL_t jsonTypeTx;
-    u8 buf[128]; 
+    u8 buf[U8FIFOSIZE]; 
     u8 len = 0;
     u8Data_t u8Data;
     u8 idx = 0;
@@ -211,9 +193,12 @@ int reportgetCharNetInfo(NetInfo_t* netInfo)
     }
 
     jsonTypeTx.jHead = "getChar";
+    sprintf(buf, reportStatusBodyArr[idx].body, netInfo->ip, netInfo->rssi, netInfo->ssid);
     jsonTypeTx.jBody = buf;
-    jsonTypeTx.jLen = strlen(buf);
-    
+    jsonTypeTx.jLen = strlen(jsonTypeTx.jBody);
+#if 1
+    sm_sendData_once(&jsonTypeTx);
+#else
     /** hhhhhhhhh head **/
     len = strlen(jsonTypeTx.jHead);
     for (int i = 0; i < len; i++) {
@@ -224,7 +209,7 @@ int reportgetCharNetInfo(NetInfo_t* netInfo)
     u8FIFOin_irq(&g_uart2TxQue, &u8Data); 
     
     /** lllllllll length **/
-    sprintf(buf, reportStatusBodyArr[idx].body, netInfo->ip, netInfo->rssi, netInfo->ssid);
+    
     len = strlen(buf);
     if (sprintf(buf, "%d", len)) {
         for (int i = 0; i < strlen(buf); i++) {
@@ -245,6 +230,7 @@ int reportgetCharNetInfo(NetInfo_t* netInfo)
     u8Data.u8Val = '\n';
     u8FIFOin_irq(&g_uart2TxQue, &u8Data);
     return (TRUE);
+#endif
 }
 
 /***********************************************************************
@@ -405,14 +391,7 @@ jsonTL_t* getService(u8 idx)
     return (&ServiceArr[idx]);
 }
 
-jsonTL_t* getHeartbeat(void)
-{
-    static jsonTL_t heartbeat[] = {
-        {"heartbeat",0,""}
-    };
-    return (&heartbeat[0]);
-}
-
+#if 0
 jsonTL_t* getConnectWifi(u8 idx)
 {
     static jsonTL_t ConnectWifiArr[] = {
@@ -430,6 +409,33 @@ jsonTL_t* getConnectWifi(u8 idx)
 
     return (&ConnectWifiArr[idx]);
 }
+#endif
+
+/**
+ * ��sprintf()ת�����ֵ��ַ���ʱ���ֹ���! ԭ��δ֪! �ô˺������
+ **/
+RetStatus digit2ascii(int from, char* to)
+{
+    if ((from > 999) || (from < 0) || (to == NULL)) {
+        return PERROR;
+    }
+    #if 1
+    if (from > 99) {
+        to[0] = '0' + (from / 100);
+        to[1] = '0' + ((from / 10) % 10);
+        to[2] = '0' + (from % 10);
+        to[3] = '\0';
+    } else if (from > 9) {
+        to[0] = '0' + (from / 10);
+        to[1] = '0' + (from % 10);
+        to[2] = '\0';
+    } else {
+        to[0] = '0' + from;
+        to[1] = '\0';
+    }
+    #endif
+    return POK;
+}
 
 /**
  * send all data at once 
@@ -438,14 +444,15 @@ jsonTL_t* getConnectWifi(u8 idx)
 void sm_sendData_once(jsonTL_t* jp)
 {
     u8Data_t u8Data;
-    u8 buf[8];
+    u8 len_buf[8];
     int len = 0;
     int send_count = 0;
+    // int i = 0;
 
     if (jp == NULL) {
         return;
     }
-    
+
     /** hhhhhhhhh head **/
     len = strlen(jp->jHead);
     for (int i = 0; i < len; i++) {
@@ -454,19 +461,23 @@ void sm_sendData_once(jsonTL_t* jp)
     }
     u8Data.u8Val = ',';
     u8FIFOin_irq(&g_uart2TxQue, &u8Data); 
-    
+
     /** lllllllll length **/
     len = strlen(jp->jBody);
     if (strchr(jp->jBody, '\n')) {
         len--;
     }
-    if (sprintf(buf, "%d", len)) {
-        for (int i = 0; i < strlen(buf); i++) {
-            u8Data.u8Val = buf[i];
+    #if 0
+    if (sprintf(len_buf, "%d", len)) {
+    #else
+    if (digit2ascii(len, len_buf) == POK) {
+    #endif
+        for (int i = 0; i < strlen(len_buf); i++) {
+            u8Data.u8Val = len_buf[i];
             u8FIFOin_irq(&g_uart2TxQue, &u8Data);
         }
     }
-    
+
     if (len > 0) {
         u8Data.u8Val = ',';
         u8FIFOin_irq(&g_uart2TxQue, &u8Data);
@@ -577,57 +588,26 @@ void sm_sendData(jsonTL_t* jp)
     }
 }
 
-#if 0
-void reportTest(void)
-{
-    u8 buf[] = {0xA5, 0x5A, 0x01, 0x13, 0x00, 0x05, 0x00, 0xA, 0x00, 0x01, 0x00, 0x23}; /** C8138 module test req(12-bytes) **/
-
-    u8Data_t u8Data;
-    for (int i = 0; i < MTABSIZE(buf); i++) {
-        u8Data.u8Val = buf[i];
-        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    }
-
-}
-
-int checkResponseTest(u8* str)
-{
-	  int i = 0;
-    u8 buf[] = {0x5A, 0xA5, 0x01, 0x10, 0x00, 0x06, 0x00, 0xA, 0x00, 0x02, 0x00, 0x00}; /** C8138 module test response(12-bytes) **/
-    for (i = 0; i < MTABSIZE(buf); i++) {
-        if (buf[i] != str[i]) {
-            break;
-        }
-    }
-
-    if (i >= MTABSIZE(buf)) {
-        return TRUE;
-    }
-
-    return FALSE;
-}
-#endif
-
 /********************************
  * enrolled key 
  ********************************/
-const jsonTL_t commandKeyArr[] = {
-    {"getDevInfo", 0, NULL, NULL},
-    {"heartbeat", 0, NULL, NULL},
-    {"putChar", 0, NULL, NULL},      /** 命令下发！长度不定 **/
-    {"getChar", 0, NULL, NULL},      /** 查询单个服务状态！ 长度不定  **/
-    {"reportService,", 0, NULL, NULL},      /** 查询单个服务状态！ 长度不定  **/
-    {"scanWifi", 0, NULL, NULL},        /** production test ack of scanwifi **/
-    {"connectWifi", 0, NULL, NULL},     /** production test ack of connect action **/
-    {"getRssi", 0, NULL, NULL},         /** production test ack of getRssi action **/
-    {"putWifiStatus", 0, NULL, NULL},   /** the command description !!! **/
-    {"getWifiStatus", 0, NULL, NULL},   /** the command description !!! **/
-    {"resetNet", 0, NULL, NULL},        /** reset net and configure net !!! **/
-    {"getSsid", 0, NULL, NULL},         /** netInfo ssid !!! **/
-    {"getIp", 0, NULL, NULL},           /** netInfo ip !!! **/
-    {"getMac", 0, NULL, NULL},          /** netInfo mac !!! **/
-    {"getRssi", 0, NULL, NULL},         /** netInfo rssi !!! **/
-    {"putSync", 0, NULL, NULL},          /** netInfo mac !!! **/
+ const pair_u8s8p_t commandKeyArr[] = {
+    {CINDEX_GETDEVINFO, "getDevInfo"},
+    {CINDEX_HEARTBEAT, "heartbeat"},
+    {CINDEX_PUTCHAR, "putChar"},         /** 命令下发！长度不定 **/
+    {CINDEX_GETCHAR, "getChar"},         /** 查询单个服务状态！ 长度不定  **/
+    {CINDEX_REPORTSERVICE, "reportService,"},  /** 查询单个服务状态！ 长度不定  **/
+    {CINDEX_SCANWIFI, "scanWifi"},        /** production test ack of scanwifi **/
+    {CINDEX_CONNECTWIFI, "connectWifi"},     /** production test ack of connect action **/
+    {CINDEX_GETRSSI, "getRssi"},         /** production test ack of getRssi action **/
+    {CINDEX_PUTWIFISTATUS, "putWifiStatus"},   /** the command description !!! **/
+    {CINDEX_GETWIFISTATUS, "getWifiStatus"},   /** the command description !!! **/
+    {CINDEX_RESETNET, "resetNet"},        /** reset net and configure net !!! **/
+    {CINDEX_GETSSID, "getSsid"},         /** netInfo ssid !!! **/
+    {CINDEX_GETIP, "getIp"},           /** netInfo ip !!! **/
+    {CINDEX_GETMAC, "getMac"},          /** netInfo mac !!! **/
+    {CINDEX_GETRSSI, "getRssi"},         /** netInfo rssi !!! **/
+    {CINDEX_PUTSYNC, "putSync"},          /** netInfo mac !!! **/
     // {"\xa5\x5a\x01\x10\x00\x06\x00\x0A\x00\x02", 0, NULL, NULL},
     // {"\"getDevInfo\"", 0},   /**  **/
     // {"\"heartbeat\"", 0},    /** 下发心跳！长度为0 **/
@@ -635,12 +615,7 @@ const jsonTL_t commandKeyArr[] = {
 #define CTestWIFIkeyIdx (MTABSIZE(commandKeyArr))
 };
 
-u8 getCommandKeyArrLen(void)
-{
-    return MTABSIZE(commandKeyArr);
-}
-
-jsonTL_t* getCommandKey(u8 idx)
+pair_u8s8p_t* getCommandKey(u8 idx)
 { 
     if (idx >= MTABSIZE(commandKeyArr)) {
         return (NULL);
@@ -648,11 +623,16 @@ jsonTL_t* getCommandKey(u8 idx)
 	return (&commandKeyArr[idx]);
 }
 
+u8 getCommandKeyArrLen(void)
+{
+    return MTABSIZE(commandKeyArr);
+}
+
 /**
  * "key",length,"{body}"
  * if receive key/length/body, then return true!
  **/
-objType_t sm_receiveData(u8 *data)
+objType_t sm_receiveData(char *data)
 {
     static smStatus_t s_smStatus = sm_init;
     static u16 s_bodyLen = 0;
@@ -678,13 +658,15 @@ objType_t sm_receiveData(u8 *data)
         }
 
         for(i = 0; i < getCommandKeyArrLen(); i++) {
-            if (strstr(data, getCommandKey(i)->jHead) != NULL) {   /** key **/
+            // if (strstr(data, getCommandKey(i)->jHead) != NULL) {   /** key **/
+            if (strstr(data, getCommandKey(i)->second) != NULL) {   /** key **/
                 break;
             }
         }
 
         if(i < getCommandKeyArrLen()) {
-            s_keyIdx = i;
+            // s_keyIdx = i;
+            s_keyIdx = getCommandKey(i)->first;
             s_bodyLen = 0 ;
             
             /** 
@@ -709,7 +691,11 @@ objType_t sm_receiveData(u8 *data)
         } else if (isdigit(chData)) {   // the valid number
             s_bodyLen = (s_bodyLen * 10) + (chData - '0');
         } else if (chData == ',') {
-            sprintf(data, "%d", s_bodyLen);
+            #if 1
+            digit2ascii(s_bodyLen, data);
+            #else
+            sprintf(data, "%d", s_bodyLen);  // δ֪ԭ�������ʧ�� !!!!!!
+            #endif
             s_smStatus = sm_receiveBody;
             offset = u8FIFOlength(&g_uart2RxQue);
             return obj_len;
@@ -717,6 +703,11 @@ objType_t sm_receiveData(u8 *data)
             u8FIFOinit_irq(&g_uart2RxQue);
             s_smStatus = sm_init;   // over
             
+            #if 1
+            if (commandIdx2Message(s_keyIdx, &(msg.msgType)) != PERROR) {
+                msgq_in_irq(&g_msgq, &msg);
+            }
+            #else
             if (MisDevinfo(s_keyIdx) == TRUE) {
                 /** get devinfo **/
                 msg.msgType = CGETDEVINFO_REQ;
@@ -734,6 +725,7 @@ objType_t sm_receiveData(u8 *data)
             } else {
                 /** end transmit but invalid data **/
             }
+            #endif
         }
         return obj_none;
     } else if (s_smStatus == sm_receiveBody) {    /** identifing body **/
@@ -776,7 +768,7 @@ objType_t sm_receiveData(u8 *data)
                 msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
 
-            } else if(MisGetCharMopStatus(s_keyIdx, s_bodyLen, data)) {
+            } else if(MisGetCharStatus(s_keyIdx, s_bodyLen, data)) {
                 msg.msgType = CGETCHAR_STATUS;
                 msgq_in_irq(&g_msgq, &msg);
                 return obj_none;
@@ -902,19 +894,22 @@ objType_t sm_receiveData(u8 *data)
     return obj_none;
 }
 
-#if 0
-int sm_receiveDataLen(const u8FIFO_t *que, u8 *data)
+#if 1
+RetStatus commandIdx2Message(char index, msgType_t* msg)
 {
-    
-}
-
-void CmdProcess(u8* CommId)
-{
-    for(int i = 0; i < MTABSIZE(commandKeyArr); i++) {
-        //if (strstr(jsonTypeArr[i].jsonKey, CommId)) {
-			
-        //}
+    int i = 0;
+    pair_u8msgType_t const char2msgType[] = {
+        {CINDEX_GETDEVINFO, CGETDEVINFO_REQ},
+        {CINDEX_HEARTBEAT, CHEART_BEAT},
+        {CINDEX_PUTSYNC, CPUT_SYNC},
+    };
+    for (i = 0; i < MTABSIZE(char2msgType); i++) {
+        if (char2msgType[i].first == index) {
+            *msg = char2msgType[i].second;
+            return POK;
+        }
     }
+    return PERROR;
 }
 #endif
 

@@ -18,7 +18,7 @@
 int sysProcess(void *pMsg)
 {
     int iRet = TRUE;
-    u8 buf[U8FIFOSIZE];
+    char buf[U8FIFOSIZE];
     u8Data_t u8Data;
     //u8 pCh = NULL;
     kv_t KVarr[CKVTABSIZE];
@@ -88,9 +88,8 @@ int sysProcess(void *pMsg)
                 g_netInfo.flag |= (1 << 3);
             }
         }
-
         break;
-    //case CMSG_MASTER:
+
     case CUART1_TOUT:
         /************************************
          * receive: {"xxxx":voi,"PLY":xxx,"SEQ":num}
@@ -113,7 +112,7 @@ int sysProcess(void *pMsg)
         } else {
             u8FIFOinit_irq(&g_uart1RxQue);  /** !!!!!!!!!!!! **/
             /** something wrong happened **/
-            #if 1
+            #if 0
             u8Data.u8Val = 'f';
             u8FIFOin_irq(&g_uart1TxQue, &u8Data);
             u8Data.u8Val = 'f';
@@ -158,7 +157,13 @@ int sysProcess(void *pMsg)
                         vp_stop1();
                         vp_stor(voi);
                     }
-                    
+                    #if 0  //???????????????????? for debug only
+                    u8Data_t u8Data;
+                    u8Data.u8Val = voi;
+                    u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                    #endif  // ????????????????????
+                    setStatusByvoiceIdx((u8)voi);
+                    reportStatusByvoiceIdx((u8)voi);
                     /** construct ack**/
                     generateVoiceAckOk(KVarr[src_idx].key, u8Seq_last);
                 } else {
@@ -194,33 +199,38 @@ int sysProcess(void *pMsg)
     
     case CMSG_UART1TX:
         /** nothing **/
-        
-        break;
-
-    case CGET_CHAR:
-    #if 0
-        (void)reportGetCharCmd(NULL);
-    #endif
         break;
         
+        #if 1
+    
     case CGETCHAR_MOP:
-        (void)checkAndAckGetCharWorkMode();
+    case CGETCHAR_ROLLER:
+    case CGETCHAR_CLEARWATER:
+    case CGETCHAR_PUMP:
+    case CGETCHAR_BATTERY:
+    case CGETCHAR_CHARGE:
+        AckgetCharStatusByMsgType(((msg_t *)pMsg)->msgType);
+        break;
+        #else
+    case CGETCHAR_MOP:
+        (void)AckGetCharWorkMode();
         break;
     case CGETCHAR_ROLLER:
-        (void)checkAndAckGetCharRollerStatus();
+        (void)AckGetCharRollerStatus();
         break;
     case CGETCHAR_CLEARWATER:
-        (void)checkAndAckGetCharClearWaterStatus();
+        (void)AckGetCharClearWaterStatus();
         break;
     case CGETCHAR_PUMP:
-        (void)checkAndAckGetCharPumpStatus();
+        (void)AckGetCharPumpStatus();
         break;
     case CGETCHAR_BATTERY:
-        (void)checkAndAckGetCharBatteryStatus();
+        (void)AckGetCharBatteryStatus();
         break;
     case CGETCHAR_CHARGE:
-        (void)checkAndAckGetCharChargeStatus();
+        (void)AckGetCharChargeStatus();
         break;
+        #endif
     case CGETCHAR_NETINFO:
         checkAndAckGetCharNetInfo();
         break;
@@ -275,7 +285,7 @@ int sysProcess(void *pMsg)
         
     case CHEART_BEAT:
         #if 1
-        (void)reportHeartbeat(NULL);
+        (void)reportHeartbeat();
         #endif
         break;
 
@@ -308,194 +318,42 @@ int sysProcess(void *pMsg)
 	}
     return  iRet;   
 }
-/**********************************************************************************************************/
+/**************************************************************************************************/
 
-/*************************************************************************************/
-int checkWorkModeChange(u8* status)  // !!!!!!!!!!!!!!!!
+/********************* work mode ******************************************************************/
+void AckGetCharWorkMode(void)
 {
-    return FALSE;
-}
-
-void checkAndReportWorkMode(void)
-{
-    u8 status = 0;
-    if (checkWorkModeChange(&status) == TRUE) {
-        (void)reportComponentStatus(status);
-    }
-}
-
-void checkAndAckGetCharWorkMode(void)
-{
-    u8 status = 0;
-    if (checkWorkModeChange(&status) == TRUE) {
-        (void)getCharAckComponentStatus(status);
-    }
+    (void)getCharAckComponentStatus(g_componentStatus.mop);
 }
 /*********************roller***********************************************************************/
-int checkRollerStatusChange(u8* status)
+void AckGetCharRollerStatus(void)
 {
-    u8 static roller_status_last = 0;
-    
-    if (status == NULL ) { /** something wrong**/
-        return FALSE;
-    }
- 
-    if (roller_status_last != *status) {
-        roller_status_last = *status;
-        /** report **/
-        return TRUE;
-    }
-    return FALSE;
+    (void)getCharAckComponentStatus(g_componentStatus.roller);
 }
 
-void checkAndReportRollerStatus(void)
+/********************** pump **********************************************************************/
+void AckGetCharPumpStatus(void)
 {
-    u8 roller_status = 0;
-
-    if (checkRollerStatusChange(&roller_status) == TRUE) {
-        /** report **/
-        (void)reportComponentStatus(roller_status);
-    }
+    //(void)getCharAckComponentStatus(g_componentStatus.pump);
 }
-
-void checkAndAckGetCharRollerStatus(void)
+/********************* battery ********************************************************************/
+void AckGetCharBatteryStatus(void)
 {
-    u8 roller_status = 0;
-
-    if (checkRollerStatusChange(&roller_status) == TRUE) {
-        /** report **/
-        (void)getCharAckComponentStatus(roller_status);
-    }
-}
-
-
-/************************** pump *****************************************************************/
-int checkPumpStatusChange(u8* status)
-{
-    return FALSE;
-}
-
-/**
- * the g_componentStatus.pump state get from IDs_Judge() only
- **/
-void checkAndReportPumpStatus(void)
-{
-}
-
-void checkAndAckGetCharPumpStatus(void)
-{
+    (void)getCharAckComponentStatus(g_componentStatus.battery);
 }
 /**************************************************************************************************/
-int checkBatteryChange(u8* status)
+void AckGetCharChargeStatus(void)
 {
-    u8 static battery_status_last = 0;
+    (void)getCharAckComponentStatus(g_componentStatus.charge);
 
-    if (status == NULL) {
-        return FALSE;
-    }
-    
-    if (battery_status_last != *status) {
-        battery_status_last = *status;
-        /** report **/
-        return TRUE;
-    }
-    return FALSE;
 }
-
-void checkAndReportBatteryStatus(void)
+/**************************************************************************************************/
+void AckGetCharClearWaterStatus(void)
 {
-    u8 battery_status = 0;
-    
-    if (checkBatteryChange(&battery_status) == TRUE) {
-        /** report **/
-        (void)reportComponentStatus(battery_status);
-    }
-}
-
-void checkAndAckGetCharBatteryStatus(void)
-{
-    u8 battery_status = 0;
-    
-    if (checkBatteryChange(&battery_status) == TRUE) {
-        /** report **/
-        (void)getCharAckComponentStatus(battery_status);
-    }
+    (void)getCharAckComponentStatus(g_componentStatus.clearWater);
 }
 
 /**************************************************************************************************/
-int checkChargeChange(u8* status)
-{
-    u8 static charge_status_last = 0;
-
-    if (charge_status_last != *status) {
-        charge_status_last = *status;
-        /** report **/
-        return TRUE;
-    }
-    return FALSE;
-}
-
-void checkAndReportChargeStatus(void)
-{
-    u8 charge_status = 0;
-
-    if (checkChargeChange(&charge_status) == TRUE) {
-        /** report **/
-        (void)reportComponentStatus(charge_status);
-    } else {
-        if (charge_status == CINDEX_UNCHARGED) {
-            // (void)reportBatteryLevel(sysvar.BAT_soc);
-        } else {
-            reportComponentStatus(charge_status);
-        }
-    }
-}
-
-void checkAndAckGetCharChargeStatus(void)
-{
-    u8 charge_status = 0;
-
-    if (checkChargeChange(&charge_status) == TRUE) {
-        /** report **/
-        (void)getCharAckComponentStatus(charge_status);
-    }
-}
-/**************************************************************************************************/
-int checClearWaterChange(u8* status)
-{
-    u8 static clear_status_last = 0;
-
-    if (status == NULL) {
-        return FALSE;
-    }
-    
-    if (clear_status_last != *status) {
-        clear_status_last = *status;
-        /** report **/
-        return TRUE; // !!!!!!!!!!!!!!
-    }
-    return FALSE;
-}
-
-void checkAndReportClearWaterStatus(void)
-{
-    u8 clear_status = 0;
-
-    if (checClearWaterChange(&clear_status) == TRUE) {
-        /** report **/
-        (void)reportComponentStatus(clear_status);
-    }
-}
-
-void checkAndAckGetCharClearWaterStatus(void)
-{
-    u8 clear_status = 0;
-    if (checClearWaterChange(&clear_status) == TRUE) {
-        /** report **/
-        (void)getCharAckComponentStatus(clear_status);
-    }
-}
-
 /** Ack for query; no matter status changed or not **/
 void checkAndAckGetCharNetInfo(void)
 {
@@ -511,52 +369,104 @@ void netInfoData_init(void)
     strcpy(g_netInfo.mac, "0:0:0:0:0:0");
 }
 
+/**************************************************************************************************/
 void checkAndAckGetCharUpdate(void)
 {
     (void)getCharAckComponentStatus(CINDEX_UPDATE);
 }
 
 /*****************************************************************************/
-void setStatus(void)
+/**
+ * 主控板需要向语音板告知当前工作状态! 当前方案是直接用主控板发来的语音编号作为工作状态通告
+ **/
+Quadruple_u8u8u8pu8_t  voiceIdx2status[] = {
+	// {vopIdx_ConnectNo, CINDEX_CHARGING, &(g_componentStatus.mop), 2},   //=1, //未连接设备//共用//
+	// {vopIdx_Disconnect, CINDEX_CHARGING, &(g_componentStatus.mop), 2},  // =2,//设备已断开
+	// {vopIdx_Install, CINDEX_CHARGING, &(g_componentStatus.mop), 2},  // =3,//进入设置模式
+	// {vopIdx_VoiceOpen, CINDEX_CHARGING,  &(g_componentStatus.mop), 2},  // =4,//开启语音
+	// {vopIdx_VoiceClose, CINDEX_CHARGING, &(g_componentStatus.mop), 2},  // =5,//关闭语音
+	// {vopIdx_WifiReset, CINDEX_CHARGING, &(g_componentStatus.mop), 2},  // =6,//网络复位成功
+	// {vopIdx_WifiConnecting, CINDEX_CHARGING, &(g_componentStatus.mop), 2},  // =7,//网络正在连接
+	// {vopIdx_WifiOk, CINDEX_CHARGING, &(g_componentStatus.mop), 2},  // =8,//网络连接成功
+	
+	{vopIdx_CHing, CINDEX_CHARGING, &(g_componentStatus.charge), 2},  // =9,//开始充电
+	{vopIdx_CHcomplete, CINDEX_CHARGECOMPLETE, &(g_componentStatus.charge), 3},  // =10,//充电已完成
+	{vopIdx_Choff, CINDEX_UNCHARGED, &(g_componentStatus.charge), 1},  // =11,//充电中断
+	
+	{vopIdx_standard, CINDEX_STANDARD, &(g_componentStatus.mop), 2},  // =12,//进入标准模式
+	{vopIdx_RUNm2, CINDEX_HIGHPOWER, &(g_componentStatus.mop), 3},  // =13,//进入强力模式
+	// {vopIdx_nop2, CINDEX_STANDBY, &(g_componentStatus.mop, 1},  // =14,//大水冲洗模式
+	// {vopIdx_RUNCL, CINDEX_STANDBY, &(g_componentStatus.mop, 1},  // =15,//进入自清洗模式
+	// {vopIdx_RunclOver, CINDEX_STANDBY, &(g_componentStatus.mop, 1},  // =16,//自清洗已完成
+	
+	{vopIdx_RUNover, CINDEX_STANDBY, &(g_componentStatus.mop), 1},  // =17,//运行结束，请放回底座自清洗	
+
+	// {vopIdx_RUNOFF, CINDEX_STANDBY, &(g_componentStatus.mop), 1},  // =18,//运行结束
+	{vopIdx_Chlowing, CINDEX_BATTERYLOW,  &(g_componentStatus.battery), 1},  // =19,//电量不足，请及时充电
+	// {nop3, CINDEX_STANDBY, &(g_componentStatus.battery), 1},  // =20,//电量不足，请立即充电
+	// {nop4, CINDEX_STANDBY, &(g_componentStatus.battery), 1},  // =21,//电量不足，请充电后继续
+	{vopIdx_CHErr, CINDEX_CHARGEFAULT, &(g_componentStatus.charge), 4},  // =22,//充电异常，请检查充电器
+	//{vopIdx_ConnectDragLala, CINDEX_STANDBY, &(g_componentStatus.battery), 2},  // =23,//洗地机已连接
+	//{vopIdx_CisternOk, CINDEX_STANDBY, &(g_componentStatus.battery), 2},  // =24,//水箱已安装
+	//{vopIdx_CisternNo, CINDEX_STANDBY, &(g_componentStatus.battery), 2},  // =25,//水箱已取出
+	//{vopIdx_CisternTake,CINDEX_STANDBY,  &(g_componentStatus.battery), 2},  // =26,//水箱已取出，进入大水冲洗模式
+	{vopIdx_sewageErr, CINDEX_CLEARWATERSHORTAGE, &(g_componentStatus.clearWater), 2},  // =27,//污水箱已满，请清理污水箱
+	{vopIdx_ClearErr, CINDEX_CLEARWATERSHORTAGE, &(g_componentStatus.clearWater), 2},  // =28,//请加入清水
+	// {vopIdx_PumpErr, CINDEX_STANDBY, &(g_componentStatus.clearWater), 2},  // =29,//水泵电机异常
+	// {nop5, CINDEX_STANDBY,  &(g_componentStatus.clearWater), 2},  // =30,//水泵电机未安装
+
+	{vopIdx_RollerErr, CINDEX_ROLLEROVERLOAD, &(g_componentStatus.roller), 2},  // =31,//请检查滚筒
+};
+
+/*****************************************************************************/
+RetStatus setStatusByvoiceIdx(u8 idx)
 {
-    return;
+    int i = 0;
+    for (i = 0; i < MTABSIZE(voiceIdx2status); i++) {
+        if (voiceIdx2status[i].idx == idx) {
+            *(voiceIdx2status[i].ptr) = voiceIdx2status[i].status_idx;
+            return POK;
+        }
+    }
+    return PERROR;
+}
+
+RetStatus reportStatusByvoiceIdx(u8 idx)
+{
+    int i = 0;
+    for (i = 0; i < MTABSIZE(voiceIdx2status); i++) {
+        if (voiceIdx2status[i].idx == idx) {
+            reportComponentStatus(voiceIdx2status[i].status_idx);
+            // reportComponentStatus(CINDEX_STANDARD);
+            return POK;
+        }
+    }
+
+    return PERROR;
+}
+
+/*****************************************************************************/
+static const pair_msgType2u8ptr_t msgType2u8ptr[] = {
+    {CGETCHAR_MOP,        &(g_componentStatus.mop)},
+    {CGETCHAR_ROLLER,     &(g_componentStatus.roller)},
+    // {CGETCHAR_PUMP,       &(g_componentStatus.mop)},
+    {CGETCHAR_CLEARWATER, &(g_componentStatus.clearWater)},
+    {CGETCHAR_BATTERY,    &(g_componentStatus.battery)},
+    {CGETCHAR_CHARGE,     &(g_componentStatus.charge)},
+    // {CGETCHAR_NETINFO,    &(g_componentStatus.charge)},
+    // {CGETCHAR_UPDATE,     &(g_componentStatus.charge)},
+};
+
+RetStatus AckgetCharStatusByMsgType(msgType_t msgType)
+{
+    int i = 0;
+    for (i = 0; i < MTABSIZE(msgType2u8ptr); i++) {
+        if (msgType2u8ptr[i].first == msgType) {
+            getCharAckComponentStatus(*(msgType2u8ptr[i].second));
+            return POK;
+        }
+    }
+    return PERROR;
 }
 /*****************************************************************************/
-pair_u8vpv_t command2status[] = {
-	{vopIdx_ConnectNo, setStatus},   //=1, //未连接设备//共用//
-	{vopIdx_Disconnect, setStatus},  // =2,//设备已断开
-	// {vopIdx_Install, setStatus},  // =3,//进入设置模式
-	// {vopIdx_VoiceOpen, setStatus},  // =4,//开启语音
-	// {vopIdx_VoiceClose, setStatus},  // =5,//关闭语音
-	// {vopIdx_WifiReset, setStatus},  // =6,//网络复位成功
-	// {vopIdx_WifiConnecting, setStatus},  // =7,//网络正在连接
-	// {vopIdx_WifiOk, setStatus},  // =8,//网络连接成功
-	
-	{vopIdx_CHing, setStatus},  // =9,//开始充电
-	{vopIdx_CHcomplete, setStatus},  // =10,//充电已完成
-	{vopIdx_Choff, setStatus},  // =11,//充电中断
-	{vopIdx_standard, setStatus},  // =12,//进入标准模式
-
-	#if 0	
-	{vopIdx_RUNm2, setStatus},  // =13,//进入强力模式
-	// {vopIdx_nop2, setStatus},  // =14,//大水冲洗模式
-	// {vopIdx_RUNCL, setStatus},  // =15,//进入自清洗模式
-	// {vopIdx_RunclOver, setStatus},  // =16,//自清洗已完成
-	{vopIdx_RUNover, setStatus},  // =17,//运行结束，请放回底座自清洗
-	{vopIdx_RUNOFF, setStatus},  // =18,//运行结束
-	{vopIdx_Chlowing, setStatus},  // =19,//电量不足，请及时充电
-	{nop3, setStatus},  // =20,//电量不足，请立即充电
-	{nop4, setStatus},  // =21,//电量不足，请充电后继续
-	{vopIdx_CHErr, setStatus},  // =22,//充电异常，请检查充电器
-	{vopIdx_ConnectDragLala, setStatus},  // =23,//洗地机已连接
-	//{vopIdx_CisternOk, setStatus},  // =24,//水箱已安装
-	//{vopIdx_CisternNo, setStatus},  // =25,//水箱已取出
-	//{vopIdx_CisternTake, setStatus},  // =26,//水箱已取出，进入大水冲洗模式
-	//{vopIdx_sewageErr, setStatus},  // =27,//污水箱已满，请清理污水箱
-	{vopIdx_ClearErr, setStatus},  // =28,//请加入清水
-	{vopIdx_PumpErr, setStatus},  // =29,//水泵电机异常
-	{nop5, setStatus},  // =30,//水泵电机未安装
-	{vopIdx_RollerErr, setStatus},  // =31,//请检查滚筒
-#endif
-};
 

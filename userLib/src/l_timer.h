@@ -2,7 +2,7 @@
 #define __L_TIMER_H
  
 void TimingDelay_Decrement(void);
-void TimingDelayUS_Decrement(void);
+// void TimingDelayUS_Decrement(void);
 void TimingDelay_Increment(void);
 
 void vop_sendByPulse(void);
