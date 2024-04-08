@@ -14,6 +14,9 @@
 
 int f_idle(void *pMsg)
 {
+	  // func_t func;
+    msg_t msg;
+
     switch(((msg_t *)pMsg)->msgType) 
     {
     case CMSG_TMR:
@@ -29,7 +32,16 @@ int f_idle(void *pMsg)
     case CPMT_OVER:
         // GPIO_VOPPWR_off();
         break;
+
+    case CCONN_ROUTE:
+        //fstack_init(&g_fstack);
+        // func.func = f_getNetInfo;
+        //fstack_push(&g_fstack, &func);
         
+        msg.msgType = CMSG_INIT;
+        msgq_in_irq(&g_msgq, &msg);
+        break;
+
     default:
         break;
 	}  
@@ -82,5 +94,47 @@ int f_init(void *pMsg)
 
     return  0;
 }
+
+/** get wifi netinfo **/
+int f_getNetInfo(unsigned *pMsg)
+{
+    func_t func;
+    msg_t msg;
+    RetStatus_pfunc_void_t funcArr[] = {
+        doNothing,
+        reportgetSsid,
+        reportgetIp,
+        reportgetMac,
+        reportgetRssi,
+    };
+
+    switch(((msg_t *)pMsg)->msgType)
+    {
+    case CMSG_INIT:
+        g_tick = 0;
+        SetTimer_irq(&g_timer[0], TIMER_1SEC, CMSG_TMR);
+        g_netInfo.flag = 0;
+		break;
+    
+    case CMSG_TMR:
+        g_tick++;
+        if (g_tick >= MTABSIZE(funcArr)) {
+            fstack_init(&g_fstack);
+            func.func = f_idle;
+            fstack_push(&g_fstack, &func);
+            msg.msgType = CMSG_INIT;
+            msgq_in_irq(&g_msgq, &msg);
+        } else {
+            (void)funcArr[g_tick]();
+        }
+        break;
+        
+    default:
+        break;
+    }
+	
+    return  0;
+}
+
 
 

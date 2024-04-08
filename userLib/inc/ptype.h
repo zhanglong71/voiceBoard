@@ -23,7 +23,7 @@ typedef enum {
 
 typedef	int	 (*pfunc_t)(void* arg);
 typedef	void (*void_paction_void_t)(void);
-//typedef	void (*paction_t_0)(void);
+typedef	RetStatus (*RetStatus_pfunc_void_t)(void);
 
 typedef struct func_s {
     pfunc_t func;       /** function **/

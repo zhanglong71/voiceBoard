@@ -1,12 +1,14 @@
 receive: 
-  {"xxxx":voi,"PLY":xxx}
+  {"xxx":voi,"PLY":xxx}
 ack:
-  {"voi":xxxx,"PLY":OK}
-  {"voi":xxxx,"PLY":err}
+  {"voi":xxx,"PLY":OK}
+  {"voi":xxx,"PLY":err}
   
   2024/2/2 9:55:38 º”–Ú¡–∫≈
 receive: 
-  {"xxxx":voi,"PLY":xxx,"SEQ":yyy}
+  {"xxx":voi,"PLY":xxx,"SEQ":yyy}
+  {"xxx":voi,"PLY":12,"SEQ":12}
+  {"xxx":voi,"PLY":13,"SEQ":13}
 ack:
-  {"voi":xxxx,"PLY":OK,"SEQ":yyy}
-  {"voi":xxxx,"PLY":err,"SEQ":yyy}
+  {"voi":xxx,"PLY":OK,"SEQ":12}
+  {"voi":xxx,"PLY":err,"SEQ":12}

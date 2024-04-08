@@ -13,17 +13,21 @@
 #include "l_actionFIFO.h"
 #include "l_sysProcess.h"
 #include "l_rs485.h"
+// #include "f_idle.h"
 #include "hk32f0301mxxc.h"
 
 int sysProcess(void *pMsg)
 {
+    //func_t func;
+    //msg_t msg;
+
     int iRet = TRUE;
     char buf[U8FIFOSIZE];
     u8Data_t u8Data;
     //u8 pCh = NULL;
     kv_t KVarr[CKVTABSIZE];
     int flag;
-    u8 len = 0;
+    // u8 len = 0;
     u8 i = 0;
 
     switch(((msg_t *)pMsg)->msgType)
@@ -31,7 +35,6 @@ int sysProcess(void *pMsg)
     case CMSG_UART2RX:
         if(u8FIFOisEmpty(&g_uart2RxQue) != TRUE) {
             /** do something to uart2 data **/
-            u8Data_t u8Data;
             objType_t objtype = sm_receiveData(buf);
             if (objtype == obj_none) {
                 /** nothing **/
@@ -281,8 +284,12 @@ int sysProcess(void *pMsg)
         break;
 
     case CWIFI_STATUS:
-        break;    
-        
+        break;
+    case CDISCONN_CLOUD:
+        break;
+    case CCONN_CLOUD:
+        break;
+
     case CHEART_BEAT:
         #if 1
         (void)reportHeartbeat();
@@ -319,7 +326,7 @@ int sysProcess(void *pMsg)
     return  iRet;   
 }
 /**************************************************************************************************/
-
+#if 0
 /********************* work mode ******************************************************************/
 void AckGetCharWorkMode(void)
 {
@@ -352,7 +359,7 @@ void AckGetCharClearWaterStatus(void)
 {
     (void)getCharAckComponentStatus(g_componentStatus.clearWater);
 }
-
+#endif
 /**************************************************************************************************/
 /** Ack for query; no matter status changed or not **/
 void checkAndAckGetCharNetInfo(void)

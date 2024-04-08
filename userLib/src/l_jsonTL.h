@@ -41,5 +41,12 @@ int getCharAckComponentStatus(u8 statusIndex);
 
 // void reportTest(void);
 RetStatus commandIdx2Message(char index, msgType_t* msg);
+RetStatus doNothing(void);
+
+RetStatus reportCommand(char* comm, int len);
+RetStatus reportgetSsid(void);
+RetStatus reportgetIp(void);
+RetStatus reportgetMac(void);
+RetStatus reportgetRssi(void);
 
 #endif

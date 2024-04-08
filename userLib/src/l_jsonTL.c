@@ -116,7 +116,7 @@ int reportBatteryLevel(u8 arg)
 {
     jsonTL_t jsonTypeTx;
     u8 buf[U8FIFOSIZE]; 
-    u8 len = 0;
+    //u8 len = 0;
     u8Data_t u8Data;
     u8 idx = 0;
 
@@ -175,8 +175,8 @@ int reportgetCharNetInfo(NetInfo_t* netInfo)
 {
     jsonTL_t jsonTypeTx;
     u8 buf[U8FIFOSIZE]; 
-    u8 len = 0;
-    u8Data_t u8Data;
+    // u8 len = 0;
+    // u8Data_t u8Data;
     u8 idx = 0;
 
     if (netInfo == NULL) {
@@ -694,7 +694,7 @@ objType_t sm_receiveData(char *data)
             #if 1
             digit2ascii(s_bodyLen, data);
             #else
-            sprintf(data, "%d", s_bodyLen);  // 未知原因的数据失败 !!!!!!
+            sprintf(data, "%d", s_bodyLen);  // 未知原因的数据失败! 弃用 !!!!!!
             #endif
             s_smStatus = sm_receiveBody;
             offset = u8FIFOlength(&g_uart2RxQue);
@@ -704,6 +704,7 @@ objType_t sm_receiveData(char *data)
             s_smStatus = sm_init;   // over
             
             #if 1
+            /** nobody message identified **/
             if (commandIdx2Message(s_keyIdx, &(msg.msgType)) != PERROR) {
                 msgq_in_irq(&g_msgq, &msg);
             }
@@ -910,6 +911,106 @@ RetStatus commandIdx2Message(char index, msgType_t* msg)
         }
     }
     return PERROR;
+}
+#endif
+
+RetStatus doNothing(void)
+{
+    return POK;
+}
+
+RetStatus reportCommand(char* comm, int len)
+{
+    u8Data_t u8Data;
+    for (int i = 0; ((i < strlen(comm)) && (i < len)); i++) {
+        u8Data.u8Val = comm[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+
+    return (POK);
+}
+
+#if 1
+RetStatus reportgetSsid(void)
+{
+    char buf[] = "getSsid,0\n";
+    return reportCommand(buf, strlen(buf));
+
+}
+
+#else
+RetStatus reportgetSsid(void)
+{
+    u8Data_t u8Data;
+    u8 buf[] = "getSsid,0\n";
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+
+    return (POK);
+}
+#endif
+
+#if 1
+RetStatus reportgetIp(void)
+{
+    char buf[] = "getIp,0\n";
+    return reportCommand(buf, strlen(buf));
+}
+
+#else
+RetStatus reportgetIp(void)
+{
+    u8Data_t u8Data;
+    u8 buf[] = "getIp,0\n";
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+
+    return (POK);
+}
+#endif
+
+#if 1
+RetStatus reportgetMac(void)
+{
+    char buf[] = "getMac,0\n";
+    return reportCommand(buf, strlen(buf));
+}
+
+#else
+RetStatus reportgetMac(void)
+{
+    u8Data_t u8Data;
+    u8 buf[] = "getMac,0\n";
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+
+    return (POK);
+}
+#endif
+
+#if 1
+RetStatus reportgetRssi(void)
+{
+    char buf[] = "getRssi,0\n";
+    return reportCommand(buf, strlen(buf));
+}
+#else
+RetStatus reportgetRssi(void)
+{
+    u8Data_t u8Data;
+    u8 buf[] = "getRssi,0\n";
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+
+    return (POK);
 }
 #endif
 
