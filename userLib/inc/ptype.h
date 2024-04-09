@@ -17,8 +17,11 @@ typedef unsigned char u8;
 typedef unsigned short u16;
 /*******************************************************************************/
 typedef enum {
-    PERROR = -1,
+    PNOSYS = -3,   // function not implement
+    PINVAL = -2,   // invalid argument
+    PERROR = -1,   // unclassified error
     POK = 0,
+    PCONTINUE = 1,
 } RetStatus;
 
 typedef	int	 (*pfunc_t)(void* arg);
@@ -49,8 +52,9 @@ typedef enum {
     CSYS_INITS3,  	//
     
     CMSG_INIT,  	//åˆå§‹åŒ–åŠ¨ä½œ(è¿›å…¥é€‰æ‹©)
-    CRESP_INFO,
+    // CRESP_INFO,
     
+    CMSG_QUERY,
     CGETDEVINFO_REQ,
     CGETDEVINFO_RSPOK,
     CGETDEVINFO_RSPERROR,
@@ -88,7 +92,7 @@ typedef enum {
     CRESETNET_RSPFAIL,
     
     CMSG_TMR,
-    CMSG_USTMR,
+    // CMSG_USTMR,
  //   CMSG_DLAY, 	/** æ—¶é’Ÿ **/
  //   CMSG_NEXT, 	/** è¿›è¡Œå…¥ä¸‹ä¸€é˜¶æ®µ **/
     CMSG_DKEY,
@@ -136,9 +140,9 @@ typedef struct Timer_s {
 } Timer_t; 
 
 typedef struct jsonTL_s {
-	u8 *jHead;
+	char *jHead;
     u8 jLen;    /** Ö¸¶¨³¤¶È! Èç¹ûÊÇ0£¬¾ÍÊÇ²»È·¶¨ **/
-    u8 *jBody;
+    char *jBody;
     // void* arg; /** ÊÕµ½¶ÔÓ¦ÃüÁîµÄÏìÓ¦¶¯×÷ »ò ÆäËü **/
 } jsonTL_t;
 
@@ -393,6 +397,7 @@ typedef struct NetInfo_s{
     char ip[20];
     char mac[20];
     int rssi;
+    int count;
     int flag;
     /** 
      * flag: updated or not
@@ -405,7 +410,7 @@ typedef struct NetInfo_s{
 
 typedef struct reportStatusBody_s{
 	u8 index;
-	u8* body;
+	char* body;
 } reportStatusBody_t;
 /*******************************************************************************/
 

@@ -12,16 +12,24 @@
 #include "l_sysProcess.h"
 #include "f_idle.h"
 
+/*********************************************************************************************/
 int f_idle(void *pMsg)
 {
-	  // func_t func;
-    msg_t msg;
+	// func_t func;
+    // msg_t msg;
+    RetStatus_pfunc_void_t queryNetInfoArr[] = {
+        doNothing,
+        //reportgetSsid,
+        //reportgetIp,
+        //reportgetMac,
+        //reportgetRssi,
+    };
 
     switch(((msg_t *)pMsg)->msgType) 
     {
     case CMSG_TMR:
         g_tick++;
-        reportBatteryLevel(g_tick % 100);  // ?????????????????????????????????? for debug only
+        // reportBatteryLevel(g_tick % 100);  // ?????????????????????????????????? for debug only
         break;
         
     case CMSG_INIT:
@@ -34,12 +42,18 @@ int f_idle(void *pMsg)
         break;
 
     case CCONN_ROUTE:
-        //fstack_init(&g_fstack);
-        // func.func = f_getNetInfo;
-        //fstack_push(&g_fstack, &func);
-        
-        msg.msgType = CMSG_INIT;
-        msgq_in_irq(&g_msgq, &msg);
+        g_netInfo.flag = 0;
+        g_netInfo.count = 0;
+        SetTimer_irq(&g_timer[3], TIMER_100MS, CMSG_QUERY);
+        break;
+    case CMSG_QUERY:
+	    g_netInfo.count++;
+        getNetInfofunc(g_netInfo.count)();
+        if (g_netInfo.count < MTABSIZE(queryNetInfoArr)) {
+            (void)queryNetInfoArr[g_netInfo.count]();
+        } else {
+            ClrTimer_irq(&g_timer[3]);
+        }
         break;
 
     default:
@@ -95,7 +109,26 @@ int f_init(void *pMsg)
     return  0;
 }
 
+/*********************************************************************************************/
+#if 0
+RetStatus queryNetInfo(int index)
+{
+    RetStatus_pfunc_void_t queryNetInfoArr[] = {
+        doNothing,
+        reportgetSsid,
+        reportgetIp,
+        reportgetMac,
+        reportgetRssi,
+    };
+
+    if (index < MTABSIZE(queryNetInfoArr)) {
+        (void)queryNetInfoArr[index]();
+    }
+}
+#endif
+/*********************************************************************************************/
 /** get wifi netinfo **/
+#if 0
 int f_getNetInfo(unsigned *pMsg)
 {
     func_t func;
@@ -113,7 +146,7 @@ int f_getNetInfo(unsigned *pMsg)
     case CMSG_INIT:
         g_tick = 0;
         SetTimer_irq(&g_timer[0], TIMER_1SEC, CMSG_TMR);
-        g_netInfo.flag = 0;
+        g_netInfo.count = 0;
 		break;
     
     case CMSG_TMR:
@@ -135,6 +168,6 @@ int f_getNetInfo(unsigned *pMsg)
 	
     return  0;
 }
-
+#endif
 
 

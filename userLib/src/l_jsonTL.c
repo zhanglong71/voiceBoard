@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "l_u8FIFO.h"
 #include "l_jsonTL.h"
@@ -17,57 +18,74 @@
 #include "l_rs485.h"
 // #include "main.h"
 
-int reportDevInfo(unsigned *arg)
+RetStatus reportDevInfo(unsigned *arg)
 {
     (void)arg;
     jsonTL_t* p = getDevInfo(0);
     sm_sendData(p);
-    return (TRUE);
+    return (POK);
 }
 
-
-int reportService(unsigned *arg)
+RetStatus reportService(unsigned *arg)
 {
     (void)arg;
     jsonTL_t* p = getService(0);
     sm_sendData(p);
-    return (TRUE);
+    return (POK);
 }
 
-int reportHeartbeat(void)
-{
-    u8 buf[] = "heartbeat,0\n";
-    reportNobodyInfo(buf, strlen(buf));
-}
-
-int reportResetNet(void)
-{
-    u8 buf[] = "resetNet,2,AP\n";
-    reportNobodyInfo(buf, strlen(buf));
-}
-
-int reportScanWifi(void)
-{
-    u8 buf[] = "scanWifi,0\n";
-    reportNobodyInfo(buf, strlen(buf));
-}
-
-void reportAckPutSync(void)
-{
-    u8 buf[] = "putSync,0\n";
-    reportNobodyInfo(buf, strlen(buf));
-}
-
-void reportNobodyInfo(char* data, int len)
+RetStatus reportNobodyInfo(char* data, int len)
 {
     u8Data_t u8Data;
     if ((data == NULL) || (len <= 0)) {
-        return;
+        //return PINVAL;
+        return PERROR;
     }
     for (int i = 0; ((i < strlen(data)) && (i < len)); i++) {
         u8Data.u8Val = data[i];
         u8FIFOin_irq(&g_uart2TxQue, &u8Data);
     }
+    return (POK);
+}
+
+#if 0
+RetStatus reportCommand(char* comm, int len)
+{
+    u8Data_t u8Data;
+    if ((comm == NULL) || (len <= 0)) {
+        return;
+    }
+    for (int i = 0; ((i < strlen(comm)) && (i < len)); i++) {
+        u8Data.u8Val = comm[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+
+    return (POK);
+}
+#endif
+
+RetStatus reportHeartbeat(void)
+{
+    char buf[] = "heartbeat,0\n";
+    return reportNobodyInfo(buf, strlen(buf));
+}
+
+RetStatus reportResetNet(void)
+{
+    char buf[] = "resetNet,2,AP\n";
+    return reportNobodyInfo(buf, strlen(buf));
+}
+
+RetStatus reportScanWifi(void)
+{
+    char buf[] = "scanWifi,0\n";
+    return reportNobodyInfo(buf, strlen(buf));
+}
+
+RetStatus reportAckPutSync(void)
+{
+    char buf[] = "putSync,0\n";
+    return reportNobodyInfo(buf, strlen(buf));
 }
 
 #if 0   // !!! 
@@ -112,12 +130,12 @@ static const reportStatusBody_t reportStatusBodyArr[] = {
 
 };
 
-int reportBatteryLevel(u8 arg)
+void reportBatteryLevel(u8 arg)
 {
     jsonTL_t jsonTypeTx;
-    u8 buf[U8FIFOSIZE]; 
-    //u8 len = 0;
-    u8Data_t u8Data;
+    char buf[U8FIFOSIZE]; 
+    // u8 len = 0;
+    // u8Data_t u8Data;
     u8 idx = 0;
 
     for (idx = 0; idx < MTABSIZE(reportStatusBodyArr); idx++) {
@@ -126,7 +144,7 @@ int reportBatteryLevel(u8 arg)
         }
     }
     if (idx >= MTABSIZE(reportStatusBodyArr)) {
-        return (MTABSIZE(reportStatusBodyArr));
+        return;
     }
 
     jsonTypeTx.jHead = "reportChar";
@@ -171,16 +189,16 @@ int reportBatteryLevel(u8 arg)
 #endif
 }
 
-int reportgetCharNetInfo(NetInfo_t* netInfo)
+RetStatus reportgetCharNetInfo(NetInfo_t* netInfo)
 {
     jsonTL_t jsonTypeTx;
-    u8 buf[U8FIFOSIZE]; 
+    char buf[U8FIFOSIZE]; 
     // u8 len = 0;
     // u8Data_t u8Data;
     u8 idx = 0;
 
     if (netInfo == NULL) {
-        return (FALSE);
+        return (PERROR);
     }
 
     for (idx = 0; idx < MTABSIZE(reportStatusBodyArr); idx++) {
@@ -189,7 +207,7 @@ int reportgetCharNetInfo(NetInfo_t* netInfo)
         }
     }
     if (idx >= MTABSIZE(reportStatusBodyArr)) {
-        return (MTABSIZE(reportStatusBodyArr));
+        return (PERROR);
     }
 
     jsonTypeTx.jHead = "getChar";
@@ -198,6 +216,7 @@ int reportgetCharNetInfo(NetInfo_t* netInfo)
     jsonTypeTx.jLen = strlen(jsonTypeTx.jBody);
 #if 1
     sm_sendData_once(&jsonTypeTx);
+		return (POK);
 #else
     /** hhhhhhhhh head **/
     len = strlen(jsonTypeTx.jHead);
@@ -229,7 +248,7 @@ int reportgetCharNetInfo(NetInfo_t* netInfo)
 
     u8Data.u8Val = '\n';
     u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    return (TRUE);
+    return (POK);
 #endif
 }
 
@@ -444,7 +463,7 @@ RetStatus digit2ascii(int from, char* to)
 void sm_sendData_once(jsonTL_t* jp)
 {
     u8Data_t u8Data;
-    u8 len_buf[8];
+    char len_buf[8];
     int len = 0;
     int send_count = 0;
     // int i = 0;
@@ -498,7 +517,6 @@ void sm_sendData_once(jsonTL_t* jp)
     }
 }
 
-
 /**
  * state machine
  *
@@ -516,7 +534,7 @@ void sm_sendData(jsonTL_t* jp)
     static jsonTL_t* p = NULL;
     static u16 total = 0;
     u8Data_t u8Data;
-    u8 buf[8];
+    char buf[8];
     int len = 0;
 
     if (s_smStatus == sm_init) {   /** first enter the send process **/
@@ -615,12 +633,12 @@ void sm_sendData(jsonTL_t* jp)
 #define CTestWIFIkeyIdx (MTABSIZE(commandKeyArr))
 };
 
-pair_u8s8p_t* getCommandKey(u8 idx)
+const pair_u8s8p_t* getCommandKey(u8 idx)
 { 
     if (idx >= MTABSIZE(commandKeyArr)) {
         return (NULL);
     }
-	return (&commandKeyArr[idx]);
+    return (&commandKeyArr[idx]);
 }
 
 u8 getCommandKeyArrLen(void)
@@ -653,7 +671,7 @@ objType_t sm_receiveData(char *data)
             offset = 0;
             return obj_none;
         }
-        if (u8FIFO_get(&g_uart2RxQue, 0, data) != TRUE) {
+        if (u8FIFO_get(&g_uart2RxQue, 0, (u8*)data) != TRUE) {
             return obj_none;
         }
 
@@ -739,7 +757,7 @@ objType_t sm_receiveData(char *data)
         #endif
         // ??????????????????????????????
         /** offset: start of head, end of len **/
-        if (u8FIFO_get(&g_uart2RxQue, offset, data) != TRUE) {
+        if (u8FIFO_get(&g_uart2RxQue, offset, (u8*)data) != TRUE) {
             return obj_none;
         }
         if (chData == '\n') {
@@ -895,7 +913,6 @@ objType_t sm_receiveData(char *data)
     return obj_none;
 }
 
-#if 1
 RetStatus commandIdx2Message(char index, msgType_t* msg)
 {
     int i = 0;
@@ -912,105 +929,50 @@ RetStatus commandIdx2Message(char index, msgType_t* msg)
     }
     return PERROR;
 }
-#endif
 
 RetStatus doNothing(void)
 {
-    return POK;
+    return PNOSYS;
 }
 
-RetStatus reportCommand(char* comm, int len)
-{
-    u8Data_t u8Data;
-    for (int i = 0; ((i < strlen(comm)) && (i < len)); i++) {
-        u8Data.u8Val = comm[i];
-        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    }
-
-    return (POK);
-}
-
-#if 1
 RetStatus reportgetSsid(void)
 {
     char buf[] = "getSsid,0\n";
-    return reportCommand(buf, strlen(buf));
-
+    return reportNobodyInfo(buf, strlen(buf));
 }
 
-#else
-RetStatus reportgetSsid(void)
-{
-    u8Data_t u8Data;
-    u8 buf[] = "getSsid,0\n";
-    for (int i = 0; i < strlen(buf); i++) {
-        u8Data.u8Val = buf[i];
-        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    }
-
-    return (POK);
-}
-#endif
-
-#if 1
 RetStatus reportgetIp(void)
 {
     char buf[] = "getIp,0\n";
-    return reportCommand(buf, strlen(buf));
+    return reportNobodyInfo(buf, strlen(buf));
 }
 
-#else
-RetStatus reportgetIp(void)
-{
-    u8Data_t u8Data;
-    u8 buf[] = "getIp,0\n";
-    for (int i = 0; i < strlen(buf); i++) {
-        u8Data.u8Val = buf[i];
-        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    }
-
-    return (POK);
-}
-#endif
-
-#if 1
 RetStatus reportgetMac(void)
 {
     char buf[] = "getMac,0\n";
-    return reportCommand(buf, strlen(buf));
+    return reportNobodyInfo(buf, strlen(buf));
 }
 
-#else
-RetStatus reportgetMac(void)
-{
-    u8Data_t u8Data;
-    u8 buf[] = "getMac,0\n";
-    for (int i = 0; i < strlen(buf); i++) {
-        u8Data.u8Val = buf[i];
-        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    }
-
-    return (POK);
-}
-#endif
-
-#if 1
 RetStatus reportgetRssi(void)
 {
     char buf[] = "getRssi,0\n";
-    return reportCommand(buf, strlen(buf));
+    return reportNobodyInfo(buf, strlen(buf));
 }
-#else
-RetStatus reportgetRssi(void)
-{
-    u8Data_t u8Data;
-    u8 buf[] = "getRssi,0\n";
-    for (int i = 0; i < strlen(buf); i++) {
-        u8Data.u8Val = buf[i];
-        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    }
 
-    return (POK);
-}
+RetStatus_pfunc_void_t getNetInfofunc(int index)
+{
+#if 0
+    if (index == 1) {
+        return reportgetSsid;
+    } else if (index == 2) {
+        return reportgetIp;
+    } else if (index == 3) {
+        return reportgetMac;
+    } else if (index == 4) {
+        return reportgetRssi;
+    }
+#else
+    return doNothing;
 #endif
+}
 

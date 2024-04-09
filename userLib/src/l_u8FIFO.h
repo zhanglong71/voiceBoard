@@ -3,6 +3,7 @@
 
 
 int u8FIFOisEmpty(const u8FIFO_t *q);
+int u8FIFOlength(u8FIFO_t *q);
 int u8FIFOisFull(const u8FIFO_t *q);
 void u8FIFOinit(u8FIFO_t *q);
 void u8FIFOinit_irq(u8FIFO_t *q);

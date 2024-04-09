@@ -69,7 +69,13 @@
  func_t func;
  u16 g_tick;			/** 定时器计数 **/
  u16 g_flag;
- Timer_t g_timer[TIMER_NUM];		/** g_timer[0] for global, g_timer[1] for uart2 receive, g_timer[2] for g_promptQueue **/
+ Timer_t g_timer[TIMER_NUM];		
+ /**
+  * g_timer[0] for global, 
+  * g_timer[1] for uart2 receive
+  * g_timer[2] for g_promptQueue
+  * g_timer[3] for key/getNetInfo
+  **/
 // Timer_t g_ustimer[TIMER_NUM_40US];		/** for 485 transmit only **/
 //u8FIFO_t g_uart3TxQue;
 //u8FIFO_t g_uart3RxQue;

@@ -241,7 +241,7 @@ int sysProcess(void *pMsg)
         checkAndAckGetCharUpdate();
         break;
     case CPUT_SYNC:
-        reportAckPutSync();
+        (void)reportAckPutSync();
         break;
 
     case CPUT_CHAR:
@@ -364,7 +364,7 @@ void AckGetCharClearWaterStatus(void)
 /** Ack for query; no matter status changed or not **/
 void checkAndAckGetCharNetInfo(void)
 {
-    reportgetCharNetInfo(&g_netInfo);
+    (void)reportgetCharNetInfo(&g_netInfo);
 }
 
 void netInfoData_init(void)
