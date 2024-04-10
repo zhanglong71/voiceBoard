@@ -38,8 +38,8 @@ RetStatus reportNobodyInfo(char* data, int len)
 {
     u8Data_t u8Data;
     if ((data == NULL) || (len <= 0)) {
-        //return PINVAL;
-        return PERROR;
+        return PINVAL;
+        //return PERROR;
     }
     for (int i = 0; ((i < strlen(data)) && (i < len)); i++) {
         u8Data.u8Val = data[i];
@@ -312,6 +312,25 @@ jsonTL_t* getDevInfo(u8 idx)
             "\"prodId\":\"2NPQ\","
             "\"deviceTypeId\":\"19F\","
             "\"manufacturerId\":\"hlp\","
+            "\"deviceModel\":\"DM7\","
+            "\"deviceTypeNameEn\":\"Scrubber\","
+            "\"manufacturerNameEn\":\"DIISEA\","
+            "\"networkType\":\"AP\","
+            "\"acKey\":\"2B5F3377287C4920506E604B326D5A6479F44A6942B1FE3C86CAD3E3A5F9654D6BC810E9D216466D843A0385A723CC8E\","
+            "\"productSeries\":\"DM\","
+            "\"productKey\":\"292a6ce5e37b4f3d823990d7370b7094\","
+            "\"marketName\":\"滴水洗地机DM7\","
+            //"\"marketName\":\"DIISEA-DM7\","
+            "\"brand\":\"DIISEA\"}"
+        },
+        #if 0
+        {
+            "getDevInfo", 0,
+            "{\"v\":\"1.0.1\","
+            "\"dv\":\"1.0.0\","
+            "\"prodId\":\"2NPQ\","
+            "\"deviceTypeId\":\"19F\","
+            "\"manufacturerId\":\"hlp\","
             "\"deviceModel\":\"DM6\","
             "\"deviceTypeNameEn\":\"Scrubber\","
             "\"manufacturerNameEn\":\"DIISEA\","
@@ -323,7 +342,6 @@ jsonTL_t* getDevInfo(u8 idx)
             //"\"marketName\":\"DIISEA-DM6\","
             "\"brand\":\"滴水科技\"}"
         },
-        #if 0
         {
             "getDevInfo", 0,
             "{\"v\":\"1.0.1\","
@@ -577,6 +595,7 @@ void sm_sendData(jsonTL_t* jp)
         }
         /** bbbbbbbbb body **/
         for (int i = 0; ((i < len) && (i < (Mu8FIFO_bufLen(&g_uart2TxQue) - 32))); i++, total++) {
+        // for (int i = 0; ((i < len) && (Mu8FIFO_bufLen(&g_uart2TxQue) > u8FIFOlength(&g_uart2TxQue))); i++, total++) {
             u8Data.u8Val = p->jBody[i];
             u8FIFOin_irq(&g_uart2TxQue, &u8Data);
         }
@@ -608,24 +627,25 @@ void sm_sendData(jsonTL_t* jp)
 
 /********************************
  * enrolled key 
+ * 
+ * Correspondence between index and string(key)
  ********************************/
  const pair_u8s8p_t commandKeyArr[] = {
-    {CINDEX_GETDEVINFO, "getDevInfo"},
-    {CINDEX_HEARTBEAT, "heartbeat"},
-    {CINDEX_PUTCHAR, "putChar"},         /** 命令下发！长度不定 **/
-    {CINDEX_GETCHAR, "getChar"},         /** 查询单个服务状态！ 长度不定  **/
-    {CINDEX_REPORTSERVICE, "reportService,"},  /** 查询单个服务状态！ 长度不定  **/
-    {CINDEX_SCANWIFI, "scanWifi"},        /** production test ack of scanwifi **/
-    {CINDEX_CONNECTWIFI, "connectWifi"},     /** production test ack of connect action **/
-    {CINDEX_GETRSSI, "getRssi"},         /** production test ack of getRssi action **/
-    {CINDEX_PUTWIFISTATUS, "putWifiStatus"},   /** the command description !!! **/
-    {CINDEX_GETWIFISTATUS, "getWifiStatus"},   /** the command description !!! **/
-    {CINDEX_RESETNET, "resetNet"},        /** reset net and configure net !!! **/
-    {CINDEX_GETSSID, "getSsid"},         /** netInfo ssid !!! **/
-    {CINDEX_GETIP, "getIp"},           /** netInfo ip !!! **/
-    {CINDEX_GETMAC, "getMac"},          /** netInfo mac !!! **/
-    {CINDEX_GETRSSI, "getRssi"},         /** netInfo rssi !!! **/
-    {CINDEX_PUTSYNC, "putSync"},          /** netInfo mac !!! **/
+    {CKEYINDEX_GETDEVINFO,    "getDevInfo"},
+    {CKEYINDEX_HEARTBEAT,     "heartbeat"},
+    {CKEYINDEX_PUTCHAR,       "putChar"},         /** 命令下发！长度不定 **/
+    {CKEYINDEX_GETCHAR,       "getChar"},         /** 查询单个服务状态！ 长度不定  **/
+    {CKEYINDEX_REPORTSERVICE, "reportService,"},  /** 查询单个服务状态！ 长度不定  **/
+    {CKEYINDEX_SCANWIFI,      "scanWifi"},        /** production test ack of scanwifi **/
+    {CKEYINDEX_CONNECTWIFI,   "connectWifi"},     /** production test ack of connect action **/
+    {CKEYINDEX_PUTWIFISTATUS, "putWifiStatus"},   /** the command description !!! **/
+    {CKEYINDEX_GETWIFISTATUS, "getWifiStatus"},   /** the command description !!! **/
+    {CKEYINDEX_RESETNET,      "resetNet"},        /** reset net and configure net !!! **/
+    {CKEYINDEX_GETSSID,       "getSsid"},         /** netInfo ssid !!! **/
+    {CKEYINDEX_GETIP,         "getIp"},           /** netInfo ip !!! **/
+    {CKEYINDEX_GETMAC,        "getMac"},          /** netInfo mac !!! **/
+    {CKEYINDEX_GETRSSI,       "getRssi"},         /** netInfo rssi !!! **/
+    {CKEYINDEX_PUTSYNC,       "putSync"},          /** netInfo mac !!! **/
     // {"\xa5\x5a\x01\x10\x00\x06\x00\x0A\x00\x02", 0, NULL, NULL},
     // {"\"getDevInfo\"", 0},   /**  **/
     // {"\"heartbeat\"", 0},    /** 下发心跳！长度为0 **/
@@ -633,6 +653,7 @@ void sm_sendData(jsonTL_t* jp)
 #define CTestWIFIkeyIdx (MTABSIZE(commandKeyArr))
 };
 
+#if 0
 const pair_u8s8p_t* getCommandKey(u8 idx)
 { 
     if (idx >= MTABSIZE(commandKeyArr)) {
@@ -645,7 +666,149 @@ u8 getCommandKeyArrLen(void)
 {
     return MTABSIZE(commandKeyArr);
 }
+#endif
 
+/**
+ * Correspondence between index and string(body)
+ **/
+const pair_u8s8p_t commandBodyArr[] = {
+    {CBODYINDEX_OK,             "ok"},
+    {CBODYINDEX_FAIL,           "fail"},
+    {CBODYINDEX_ERROR,          "error"},
+    {CBODYINDEX_MOP,            "mop"},
+    {CBODYINDEX_ROLLER,         "roller"},
+    {CBODYINDEX_CLEARWATER,     "clearWater"},
+    {CBODYINDEX_PUMP,           "pump"},
+    {CBODYINDEX_BATTERYSTATUS,  "batterystatus"},
+    {CBODYINDEX_CHARGE,         "charge"},
+    {CBODYINDEX_STATUS,         "status"},
+    {CBODYINDEX_NETINFO,        "netInfo"},
+    {CBODYINDEX_UPDATE,         "update"},
+    
+    {CBODYINDEX_0,         "0"},
+    {CBODYINDEX_1,         "1"},
+    {CBODYINDEX_8,         "8"},
+};
+
+RetStatus getStringIndexbyString(const pair_u8s8p_t* keyArr, u8 keyArr_len, char* str, u8* str_idx)
+{
+    int i;
+    if ((keyArr == NULL) || (str == NULL) || (str_idx == NULL)) {
+        return PINVAL;
+    }
+    for (i = 0; i < keyArr_len; i++) {
+        if (strstr(str, keyArr[i].second) != NULL) {
+            *str_idx = keyArr[i].first;
+            return POK;
+        }
+    }
+    return PERROR;
+}
+
+#if 0
+RetStatus commandIdx2Message(char index, msgType_t* msg)
+{
+    int i = 0;
+    pair_u8msgType_t const char2msgType[] = {
+        {CKEYINDEX_GETDEVINFO, CGETDEVINFO_REQ},
+        {CKEYINDEX_HEARTBEAT, CHEART_BEAT},
+        {CKEYINDEX_PUTSYNC, CPUT_SYNC},
+    };
+    for (i = 0; i < MTABSIZE(char2msgType); i++) {
+        if (char2msgType[i].first == index) {
+            *msg = char2msgType[i].second;
+            return POK;
+        }
+    }
+    return PERROR;
+}
+#endif
+
+/**
+ * �쵽ָ����key/len/body, ��Ӧ��ָ������Ϣ; û�ж�Ӧ����Ϣ��(CMSG_NONE), ��Ҫ��һ������
+ **/
+const Quadruple_keylenbody_t identifyKeyBodyMsg[] = {
+    {CKEYINDEX_GETCHAR,       3,  CBODYINDEX_MOP,           CGETCHAR_MOP},
+    {CKEYINDEX_GETCHAR,       6,  CBODYINDEX_ROLLER,        CGETCHAR_ROLLER},
+    {CKEYINDEX_GETCHAR,       4,  CBODYINDEX_PUMP,          CGETCHAR_PUMP},
+    {CKEYINDEX_GETCHAR,       10, CBODYINDEX_CLEARWATER,    CGETCHAR_CLEARWATER},
+    {CKEYINDEX_GETCHAR,       13, CBODYINDEX_BATTERYSTATUS, CGETCHAR_BATTERY},
+    {CKEYINDEX_GETCHAR,       6,  CBODYINDEX_CHARGE,        CGETCHAR_CHARGE},
+    {CKEYINDEX_GETCHAR,       6,  CBODYINDEX_STATUS,        CGETCHAR_STATUS},
+    {CKEYINDEX_GETCHAR,       7,  CBODYINDEX_NETINFO,       CREPORT_RSPERROR},
+    {CKEYINDEX_GETCHAR,       6,  CBODYINDEX_UPDATE,        CREPORT_RSPERROR},
+    
+    {CKEYINDEX_GETDEVINFO,    2,  CBODYINDEX_OK,            CGETDEVINFO_RSPOK},
+    {CKEYINDEX_GETDEVINFO,    5,  CBODYINDEX_ERROR,         CGETDEVINFO_RSPERROR},
+    
+    {CKEYINDEX_REPORTSERVICE, 2,  CBODYINDEX_OK,            CREPORT_RSPOK},
+    {CKEYINDEX_REPORTSERVICE, 5,  CBODYINDEX_ERROR,         CREPORT_RSPERROR},
+        
+    {CKEYINDEX_RESETNET,      2,  CBODYINDEX_OK,            CRESETNET_RSPOK},
+    {CKEYINDEX_RESETNET,      4,  CBODYINDEX_FAIL,          CRESETNET_RSPFAIL},
+
+    {CKEYINDEX_HEARTBEAT,     0,  0,                        CHEART_BEAT},
+    {CKEYINDEX_GETDEVINFO,    0,  0,                        CGETDEVINFO_REQ},
+ 
+    {CKEYINDEX_GETWIFISTATUS, 1,  CBODYINDEX_8,             CCONN_ROUTE},
+    {CKEYINDEX_GETWIFISTATUS, 1,  CBODYINDEX_1,             CCONN_CLOUD},
+    {CKEYINDEX_GETWIFISTATUS, 1,  CBODYINDEX_0,             CDISCONN_CLOUD},
+    
+    {CKEYINDEX_PUTSYNC,       0,  0,                        CPUT_SYNC},
+    // {CKEYINDEX_SCANWIFI,      0,  0,                        CSCAN_WIFI},
+    // {CKEYINDEX_CONNECTWIFI,   0,  0,                        CCONN_WIFI},
+    // {CKEYINDEX_PUTWIFISTATUS, 0,  0,                        CMSG_NONE},
+    {CKEYINDEX_GETSSID,       0,  0,                        CMSG_NONE},
+    {CKEYINDEX_GETIP,         0,  0,                        CMSG_NONE},
+    {CKEYINDEX_GETMAC,        0,  0,                        CMSG_NONE},
+    {CKEYINDEX_GETRSSI,       0,  0,                        CMSG_NONE},
+
+    // {CKEYINDEX_PUTCHAR, 0,  CBODYINDEX_ERROR,   CPUT_CHAR},
+};
+
+RetStatus KeyBody2Msg(u8 key_idx, u8 body_len, u8 body_idx, msgType_t* msg)
+{
+    int i;
+    if (body_len == 0) {
+        for (i = 0; i < MTABSIZE(identifyKeyBodyMsg); i++) {
+            if ((identifyKeyBodyMsg[i].key_idx == key_idx)) {
+                *msg = identifyKeyBodyMsg[i].msg;
+                return POK;
+            }
+        }
+        return PERROR;
+    }
+    
+    for (i = 0; i < MTABSIZE(identifyKeyBodyMsg); i++) {
+        if ((identifyKeyBodyMsg[i].key_idx == key_idx)
+            && (identifyKeyBodyMsg[i].body_len == body_len)
+            && (identifyKeyBodyMsg[i].body_idx == body_idx)) {
+            *msg = identifyKeyBodyMsg[i].msg;
+            return POK;
+        }
+    }
+    return PERROR;
+}
+
+ const pair_u8objType_t key2objTypeArr[] = {
+    {CKEYINDEX_GETSSID,       obj_SSID},         /** netInfo ssid !!! **/
+    {CKEYINDEX_GETIP,         obj_IP},           /** netInfo ip !!! **/
+    {CKEYINDEX_GETMAC,        obj_MAC},          /** netInfo mac !!! **/
+    {CKEYINDEX_GETRSSI,       obj_RSSI},         /** netInfo rssi !!! **/
+};
+
+RetStatus KeyBody2objType(u8 key_idx, objType_t* objType)
+{
+    int i;
+    for (i = 0; i < MTABSIZE(key2objTypeArr); i++) {
+        if ((key2objTypeArr[i].first == key_idx)) {
+            *objType = key2objTypeArr[i].second;
+            return POK;
+        }
+    }
+   return PERROR;
+}
+/******************************************************************************************/
 /**
  * "key",length,"{body}"
  * if receive key/length/body, then return true!
@@ -657,9 +820,11 @@ objType_t sm_receiveData(char *data)
     static u8 s_keyIdx = 0;
     static u8 offset = 0;
     u8Data_t u8Data;
+    objType_t objType;
     msg_t msg;
     u8 chData;
-    u8 i;
+    u8 bodyIdx;
+    // u8 i;
 
     if(u8FIFOisEmpty(&g_uart2RxQue) == TRUE) { /** no data !!! **/
         return obj_none;
@@ -674,10 +839,20 @@ objType_t sm_receiveData(char *data)
         if (u8FIFO_get(&g_uart2RxQue, 0, (u8*)data) != TRUE) {
             return obj_none;
         }
-
-        for(i = 0; i < getCommandKeyArrLen(); i++) {
-            // if (strstr(data, getCommandKey(i)->jHead) != NULL) {   /** key **/
-            if (strstr(data, getCommandKey(i)->second) != NULL) {   /** key **/
+#if 1
+        if (getStringIndexbyString(commandKeyArr, MTABSIZE(commandKeyArr), data, &s_keyIdx) == POK) {
+            s_bodyLen = 0;
+            s_smStatus = sm_receiveLenStep2;
+            return obj_key;
+        } else {
+            /** unrecongized **/
+            u8FIFOinit_irq(&g_uart2RxQue);  // !!!!!!
+            return obj_none;
+        }
+#else
+        for(i = 0; i < getCommandKeyArrLen(); i++) {       /** key identify **/
+            // if (strstr(data, getCommandKey(i)->jHead) != NULL) {
+            if (strstr(data, getCommandKey(i)->second) != NULL) {
                 break;
             }
         }
@@ -703,6 +878,7 @@ objType_t sm_receiveData(char *data)
             }
             #endif
         }
+#endif
     } else if (s_smStatus == sm_receiveLenStep2) {    /** identifing length  **/
         if ((chData == ' ') || (chData == '\t')) { // ignore the blank and tab
             return obj_none;
@@ -723,7 +899,9 @@ objType_t sm_receiveData(char *data)
             
             #if 1
             /** nobody message identified **/
-            if (commandIdx2Message(s_keyIdx, &(msg.msgType)) != PERROR) {
+            
+            // if (commandIdx2Message(s_keyIdx, &(msg.msgType)) != PERROR) {
+            if (KeyBody2Msg(s_keyIdx, 0, 0, &(msg.msgType)) != PERROR) {
                 msgq_in_irq(&g_msgq, &msg);
             }
             #else
@@ -764,7 +942,24 @@ objType_t sm_receiveData(char *data)
             ClrTimer_irq(&g_timer[1]);
             u8FIFOinit_irq(&g_uart2RxQue);
             s_smStatus = sm_init;   // over 
-           
+            
+    #if 1
+        /** step 1: identify the body **/
+        if (getStringIndexbyString(commandBodyArr, MTABSIZE(commandBodyArr), data, &bodyIdx) != POK) {
+            /**unrecognized the body **/
+            return obj_body;
+        }
+        
+        /** step 2: identify the body class A, then notify by msg **/
+        if (KeyBody2Msg(s_keyIdx, s_bodyLen, bodyIdx, &(msg.msgType)) == POK) {
+            msgq_in_irq(&g_msgq, &msg);
+        }
+
+        /** step 3: identify the body class B, need to further identify **/
+        if (KeyBody2objType(s_keyIdx, &objType) == POK) {
+            return objType;
+        }
+    #else
             if (MisDevinfoRespOk(s_keyIdx, s_bodyLen, data)) {
                 /** response devinfo **/
                 msg.msgType = CGETDEVINFO_RSPOK;
@@ -878,6 +1073,7 @@ objType_t sm_receiveData(char *data)
                 }
             } else {
             }
+      #endif
             return obj_body;
         }
 
@@ -911,23 +1107,6 @@ objType_t sm_receiveData(char *data)
     }
 
     return obj_none;
-}
-
-RetStatus commandIdx2Message(char index, msgType_t* msg)
-{
-    int i = 0;
-    pair_u8msgType_t const char2msgType[] = {
-        {CINDEX_GETDEVINFO, CGETDEVINFO_REQ},
-        {CINDEX_HEARTBEAT, CHEART_BEAT},
-        {CINDEX_PUTSYNC, CPUT_SYNC},
-    };
-    for (i = 0; i < MTABSIZE(char2msgType); i++) {
-        if (char2msgType[i].first == index) {
-            *msg = char2msgType[i].second;
-            return POK;
-        }
-    }
-    return PERROR;
 }
 
 RetStatus doNothing(void)
@@ -971,6 +1150,7 @@ RetStatus_pfunc_void_t getNetInfofunc(int index)
     } else if (index == 4) {
         return reportgetRssi;
     }
+    return doNothing;
 #else
     return doNothing;
 #endif

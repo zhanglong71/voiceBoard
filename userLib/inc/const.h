@@ -86,7 +86,7 @@
 #define CINDEX_UNKNOW                 (0)
 
 #define CINDEX_STANDBY                (1)
-#define CINDEX_STANDARD               (2)  
+#define CINDEX_STANDARD               (2)
 #define CINDEX_HIGHPOWER              (3)
 #define CINDEX_CLEANING               (4)
 #define CINDEX_RINSE                  (5)
@@ -130,6 +130,7 @@
 /*******************************************************************************/
 /**  index for from wifi 只要不相同即可 **/
 
+#if 0
 #define CINDEX_GETDEVINFO             (0)
 #define CINDEX_HEARTBEAT              (1)  
 #define CINDEX_PUTCHAR                (2)
@@ -149,6 +150,46 @@
 #define CINDEX_GETIP                  (12)
 #define CINDEX_GETMAC                 (13)
 #define CINDEX_PUTSYNC                (14)
+#endif
+
+#define CKEYINDEX_GETDEVINFO             (0)
+#define CKEYINDEX_HEARTBEAT              (1)
+#define CKEYINDEX_PUTCHAR                (2)
+#define CKEYINDEX_GETCHAR                (3)
+#define CKEYINDEX_REPORTSERVICE          (4)
+
+#define CKEYINDEX_SCANWIFI               (5)
+#define CKEYINDEX_CONNECTWIFI            (6)
+
+#define CKEYINDEX_GETRSSI                (7)
+#define CKEYINDEX_PUTWIFISTATUS          (8)
+#define CKEYINDEX_GETWIFISTATUS          (9)
+
+#define CKEYINDEX_RESETNET               (10)
+#define CKEYINDEX_GETSSID                (11)
+
+#define CKEYINDEX_GETIP                  (12)
+#define CKEYINDEX_GETMAC                 (13)
+#define CKEYINDEX_PUTSYNC                (14)
+
+/*******************************************************************************/
+#define CBODYINDEX_OK                (0)
+#define CBODYINDEX_FAIL              (1)
+#define CBODYINDEX_ERROR             (2)
+#define CBODYINDEX_MOP               (3)
+#define CBODYINDEX_ROLLER            (4)
+#define CBODYINDEX_CLEARWATER        (5)
+#define CBODYINDEX_PUMP              (6)
+#define CBODYINDEX_BATTERYSTATUS     (7)
+#define CBODYINDEX_CHARGE            (8)
+#define CBODYINDEX_NETINFO           (9)
+#define CBODYINDEX_UPDATE            (10)
+#define CBODYINDEX_STATUS            (11)
+
+#define CBODYINDEX_0                 (12)
+#define CBODYINDEX_1                 (13)
+#define CBODYINDEX_8                 (14)
+
 
 /*******************************************************************************/
 #endif

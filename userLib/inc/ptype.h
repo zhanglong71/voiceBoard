@@ -146,10 +146,35 @@ typedef struct jsonTL_s {
     // void* arg; /** 收到对应命令的响应动作 或 其它 **/
 } jsonTL_t;
 
-typedef struct {
-	void *var1;
-    void *var2;
-} pair_t;
+/*******************************************************************************/
+typedef enum {
+    sm_none = 0,
+    sm_init,
+    sm_idle,
+    sm_step,
+    sm_key,
+    sm_sendBody,
+    sm_receiveLen,
+    sm_receiveLenStep1,
+    sm_receiveLenStep2,
+    sm_receiveLenStep3,
+    sm_receiveBody,
+    sm_send,
+    sm_end,
+    sm_error
+} smStatus_t;
+
+typedef enum {
+    obj_none = 0,
+    obj_key,
+    obj_len,
+    obj_body,
+    obj_SSID,
+    obj_IP,
+    obj_MAC,
+    obj_RSSI,
+} objType_t;
+/*******************************************************************************/ 
 
 typedef struct {
    u8 first;
@@ -158,21 +183,38 @@ typedef struct {
 
 typedef struct {
    u8 first;
-   void_paction_void_t second;
-} pair_u8vpv_t;
+   objType_t second;
+} pair_u8objType_t;
 
+typedef struct {
+   u8  key_idx;
+   u8  body_len;
+   u8  body_idx;
+   msgType_t msg;
+} Quadruple_keylenbody_t;
+
+#if 0
 typedef struct {
    u8  idx;
    u8* ptr;
    u8  value;
 } triplet_u8u8pu8_t;
+#endif
 
+#if 0
 typedef struct {
    u8  idx;
    u8  status_idx;
    u8* ptr;
    u8  value;
 } Quadruple_u8u8u8pu8_t;
+#else
+typedef struct {
+   u8  idx;
+   u8  status_idx;
+   u8* ptr;
+} Triplet_u8u8pu8_t;
+#endif
 
 typedef struct {
    u8 first;
@@ -188,7 +230,6 @@ typedef struct {
    msgType_t first;
    u8* second;
 } pair_msgType2u8ptr_t;
-
 
 #if 0
 typedef struct bitmap_s {
@@ -283,37 +324,6 @@ typedef struct actionQueue_s {
 /*******************************************************************************/
 
 /*******************************************************************************/
-
-/*******************************************************************************/
-
-typedef enum {
-    sm_none = 0,
-    sm_init, 
-    sm_idle,
-    sm_step,
-    sm_key,
-    sm_sendBody,
-    sm_receiveLen,
-    sm_receiveLenStep1,
-    sm_receiveLenStep2,
-    sm_receiveLenStep3,
-    sm_receiveBody,
-    sm_send,
-    sm_end,
-    sm_error
-} smStatus_t;
-
-typedef enum {
-    obj_none = 0,
-    obj_key,
-    obj_len,
-    obj_body,
-    obj_SSID,
-    obj_IP,
-    obj_MAC,
-    obj_RSSI,
-} objType_t;
-/*******************************************************************************/ 
 typedef struct _JsonArr
 {
     char jName[10];

@@ -40,7 +40,7 @@ int reportComponentStatus(u8 statusIndex);
 int getCharAckComponentStatus(u8 statusIndex);
 
 // void reportTest(void);
-RetStatus commandIdx2Message(char index, msgType_t* msg);
+// RetStatus commandIdx2Message(char index, msgType_t* msg);
 
 RetStatus doNothing(void);
 // RetStatus reportCommand(char* comm, int len);

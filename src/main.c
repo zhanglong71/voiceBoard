@@ -142,7 +142,8 @@ int main(void)
     rs485Init();
     
     fstack_init(&g_fstack);
-    func.func = f_init;
+    //func.func = f_init;
+    func.func = f_idle;
     fstack_push(&g_fstack, &func);
     
     //for(int i = 0; i < MTABSIZE(g_ustimer); i++) {
@@ -165,7 +166,7 @@ int main(void)
     /* Infinite Loop */
     while(1)
     {
-        IWDG_ReloadCounter();  // Reload IWDG counter
+        IWDG_ReloadCounter();  // feed dog(Reload IWDG counter)
         //deamon_uart1_send();
         deamon_uart2_send();
         actionDoing(&g_promptQueue);

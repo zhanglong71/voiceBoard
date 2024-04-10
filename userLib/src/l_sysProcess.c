@@ -386,6 +386,46 @@ void checkAndAckGetCharUpdate(void)
 /**
  * 主控板需要向语音板告知当前工作状态! 当前方案是直接用主控板发来的语音编号作为工作状态通告
  **/
+ #if 1
+ Triplet_u8u8pu8_t const voiceIdx2status[] = {
+	// {vopIdx_ConnectNo, CINDEX_CHARGING, &(g_componentStatus.mop)},   //=1, //未连接设备//共用//
+	// {vopIdx_Disconnect, CINDEX_CHARGING, &(g_componentStatus.mop)},  // =2,//设备已断开
+	// {vopIdx_Install, CINDEX_CHARGING, &(g_componentStatus.mop)},  // =3,//进入设置模式
+	// {vopIdx_VoiceOpen, CINDEX_CHARGING,  &(g_componentStatus.mop)},  // =4,//开启语音
+	// {vopIdx_VoiceClose, CINDEX_CHARGING, &(g_componentStatus.mop)},  // =5,//关闭语音
+	// {vopIdx_WifiReset, CINDEX_CHARGING, &(g_componentStatus.mop)},  // =6,//网络复位成功
+	// {vopIdx_WifiConnecting, CINDEX_CHARGING, &(g_componentStatus.mop)},  // =7,//网络正在连接
+	// {vopIdx_WifiOk, CINDEX_CHARGING, &(g_componentStatus.mop)},  // =8,//网络连接成功
+	
+	{vopIdx_CHing, CINDEX_CHARGING, &(g_componentStatus.charge)},  // =9,//开始充电
+	{vopIdx_CHcomplete, CINDEX_CHARGECOMPLETE, &(g_componentStatus.charge)},  // =10,//充电已完成
+	{vopIdx_Choff, CINDEX_UNCHARGED, &(g_componentStatus.charge)},  // =11,//充电中断
+	
+	{vopIdx_standard, CINDEX_STANDARD, &(g_componentStatus.mop)},  // =12,//进入标准模式
+	{vopIdx_RUNm2, CINDEX_HIGHPOWER, &(g_componentStatus.mop)},  // =13,//进入强力模式
+	// {vopIdx_nop2, CINDEX_STANDBY, &(g_componentStatus.mop},  // =14,//大水冲洗模式
+	// {vopIdx_RUNCL, CINDEX_STANDBY, &(g_componentStatus.mop},  // =15,//进入自清洗模式
+	// {vopIdx_RunclOver, CINDEX_STANDBY, &(g_componentStatus.mop},  // =16,//自清洗已完成
+	
+	{vopIdx_RUNover, CINDEX_STANDBY, &(g_componentStatus.mop)},  // =17,//运行结束，请放回底座自清洗	
+
+	// {vopIdx_RUNOFF, CINDEX_STANDBY, &(g_componentStatus.mop)},  // =18,//运行结束
+	{vopIdx_Chlowing, CINDEX_BATTERYLOW,  &(g_componentStatus.battery)},  // =19,//电量不足，请及时充电
+	// {nop3, CINDEX_STANDBY, &(g_componentStatus.battery)},  // =20,//电量不足，请立即充电
+	// {nop4, CINDEX_STANDBY, &(g_componentStatus.battery)},  // =21,//电量不足，请充电后继续
+	{vopIdx_CHErr, CINDEX_CHARGEFAULT, &(g_componentStatus.charge)},  // =22,//充电异常，请检查充电器
+	//{vopIdx_ConnectDragLala, CINDEX_STANDBY, &(g_componentStatus.battery)},  // =23,//洗地机已连接
+	//{vopIdx_CisternOk, CINDEX_STANDBY, &(g_componentStatus.battery)},  // =24,//水箱已安装
+	//{vopIdx_CisternNo, CINDEX_STANDBY, &(g_componentStatus.battery)},  // =25,//水箱已取出
+	//{vopIdx_CisternTake,CINDEX_STANDBY,  &(g_componentStatus.battery)},  // =26,//水箱已取出，进入大水冲洗模式
+	{vopIdx_sewageErr, CINDEX_CLEARWATERSHORTAGE, &(g_componentStatus.clearWater)},  // =27,//污水箱已满，请清理污水箱
+	{vopIdx_ClearErr, CINDEX_CLEARWATERSHORTAGE, &(g_componentStatus.clearWater)},  // =28,//请加入清水
+	// {vopIdx_PumpErr, CINDEX_STANDBY, &(g_componentStatus.clearWater)},  // =29,//水泵电机异常
+	// {nop5, CINDEX_STANDBY,  &(g_componentStatus.clearWater)},  // =30,//水泵电机未安装
+
+	{vopIdx_RollerErr, CINDEX_ROLLEROVERLOAD, &(g_componentStatus.roller)},  // =31,//请检查滚筒
+};
+ #else
 Quadruple_u8u8u8pu8_t  voiceIdx2status[] = {
 	// {vopIdx_ConnectNo, CINDEX_CHARGING, &(g_componentStatus.mop), 2},   //=1, //未连接设备//共用//
 	// {vopIdx_Disconnect, CINDEX_CHARGING, &(g_componentStatus.mop), 2},  // =2,//设备已断开
@@ -424,7 +464,7 @@ Quadruple_u8u8u8pu8_t  voiceIdx2status[] = {
 
 	{vopIdx_RollerErr, CINDEX_ROLLEROVERLOAD, &(g_componentStatus.roller), 2},  // =31,//请检查滚筒
 };
-
+#endif
 /*****************************************************************************/
 RetStatus setStatusByvoiceIdx(u8 idx)
 {

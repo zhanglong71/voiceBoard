@@ -25,8 +25,12 @@
   (GlobalState
     (FileView
       (Path "Design Resources")
+      (Path "Design Resources" ".\ds-6-voice-2023122201.dsn")
+      (Path "Design Resources" ".\ds-6-voice-2023122201.dsn" "SCHEMATIC1")
+      (Path "Design Resources" ".\ds-6-voice-2023122201.dsn" "Design Cache")
       (Path "Outputs")
-      (Select "Design Resources"))
+      (Select "Design Resources" ".\ds-6-voice-2023122201.dsn" "Design Cache"
+         "UPC2746T/SOT_5"))
     (HierarchyView)
     (Doc
       (Type "COrCapturePMDoc")
@@ -36,12 +40,12 @@
     (Doc
       (Type "COrSchematicDoc")
       (Frame
-        (Placement "44 2 3 -1 -1 -8 -31 52 1639 52 666")
-        (Scroll "54 362")
+        (Placement "44 2 3 -1 -1 -8 -31 52 1688 52 512")
+        (Scroll "57 488")
         (Zoom "100")
         (Occurrence "/"))
       (Path
-         "F:\BAIDUSYNCDISK\SVN\HARDWARE\DS-6-VOICE\DS-6-VOICE-2023122201.DSN")
+         "D:\WORK\CODE\1221∆’  ∞Ê\VOICE∞Â\VOICEBOARD\_CIRCUIT\DS-6-VOICE-2023122201.DSN")
       (Schematic "SCHEMATIC1")
       (Page "ds-6-voice")))
   (MPSSessionName "Administrator"))
