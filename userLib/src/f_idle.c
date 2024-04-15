@@ -48,10 +48,17 @@ int f_idle(void *pMsg)
         g_netInfo.flag = 0;
         g_netInfo.count = 0;
         SetTimer_irq(&g_timer[3], TIMER_100MS, CMSG_QUERY);
+            // ???????????????????????????????? for test only
+            #if 0
+            netInfoData_init();
+            u8Data_t u8Data;
+            u8Data.u8Val = 'T';
+            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+            #endif
+            // ????????????????????????????????????????
         break;
     case CMSG_QUERY:
         #if 1
-        getNetInfofunc(g_netInfo.count)();
         if (g_netInfo.count < MTABSIZE(queryNetInfoArr)) {
             (void)queryNetInfoArr[g_netInfo.count]();
         } else {
@@ -66,6 +73,7 @@ int f_idle(void *pMsg)
         break;
 
     case CSYS_INIT:        // step1
+        // netInfoData_init();
         retStatus = reportVersion();
         if (retStatus != POK) {  // busy! try again later; giveup the 
             SetTimer_irq(&g_timer[0], TIMER_100MS, CSYS_INIT);

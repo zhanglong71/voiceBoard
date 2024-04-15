@@ -50,7 +50,7 @@ int sysProcess(void *pMsg)
                     }
                     if (strstr(KVarr[i].key, "ssid")) {
                         flag |= (1 << 2);
-                        strncpy(g_netInfo.ssid, KVarr[i].value, sizeof(g_netInfo.ssid));
+                        strncpy(g_netInfo.ssid, KVarr[i].value, sizeof(g_netInfo.ssid));  /** 未知长度，限制长度上限**/
                     }
                 }
                 if ((flag & 0x60) == 0x60) {
@@ -87,7 +87,7 @@ int sysProcess(void *pMsg)
                     g_netInfo.flag |= (1 << 2);
                 }
             } else if (objtype == obj_RSSI) {
-                g_netInfo.rssi = atoi(buf);
+                strncpy(g_netInfo.rssi, buf, sizeof(g_netInfo.rssi));
                 g_netInfo.flag |= (1 << 3);
             }
         }
@@ -212,6 +212,7 @@ int sysProcess(void *pMsg)
     case CGETCHAR_PUMP:
     case CGETCHAR_BATTERY:
     case CGETCHAR_CHARGE:
+    case CGETCHAR_STATUS:
         AckgetCharStatusByMsgType(((msg_t *)pMsg)->msgType);
         break;
         #else
@@ -271,22 +272,10 @@ int sysProcess(void *pMsg)
         
     case CREPORT_RSPOK:
         /** do nothing **/
-        #if 0  //?????????????????? for test only
-        u8Data.u8Val = 't';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        u8Data.u8Val = 'e';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        u8Data.u8Val = 's';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        u8Data.u8Val = 't';
-        u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-        #endif
         break;
 
     case CWIFI_STATUS:
-        break;
     case CDISCONN_CLOUD:
-        break;
     case CCONN_CLOUD:
         break;
 
@@ -326,56 +315,36 @@ int sysProcess(void *pMsg)
     return  iRet;   
 }
 /**************************************************************************************************/
-#if 0
-/********************* work mode ******************************************************************/
-void AckGetCharWorkMode(void)
+char* pstrcpy(char* dest, char* src)
 {
-    (void)getCharAckComponentStatus(g_componentStatus.mop);
-}
-/*********************roller***********************************************************************/
-void AckGetCharRollerStatus(void)
-{
-    (void)getCharAckComponentStatus(g_componentStatus.roller);
-}
-
-/********************** pump **********************************************************************/
-void AckGetCharPumpStatus(void)
-{
-    //(void)getCharAckComponentStatus(g_componentStatus.pump);
-}
-/********************* battery ********************************************************************/
-void AckGetCharBatteryStatus(void)
-{
-    (void)getCharAckComponentStatus(g_componentStatus.battery);
-}
-/**************************************************************************************************/
-void AckGetCharChargeStatus(void)
-{
-    (void)getCharAckComponentStatus(g_componentStatus.charge);
-
-}
-/**************************************************************************************************/
-void AckGetCharClearWaterStatus(void)
-{
-    (void)getCharAckComponentStatus(g_componentStatus.clearWater);
-}
-#endif
-/**************************************************************************************************/
-/** Ack for query; no matter status changed or not **/
-void checkAndAckGetCharNetInfo(void)
-{
-    (void)reportgetCharNetInfo(&g_netInfo);
+    if ((dest == NULL) || (src == NULL)) {
+        return NULL;
+    }
+    while((*dest++ = *src++) != '\0') {
+        ;
+    }
+    return dest;
 }
 
+/**************************************************************************************************/
 void netInfoData_init(void)
 {
     g_netInfo.flag = 0;
-    g_netInfo.rssi = 0;
-    strcpy(g_netInfo.ssid, "ssid");
-    strcpy(g_netInfo.ip, "0.0.0.0");
-    strcpy(g_netInfo.mac, "0:0:0:0:0:0");
+
+    #if 1
+    strcpy(g_netInfo.rssi, "-13");
+    strcpy(g_netInfo.ssid, "DIISEA-ssid");
+    strcpy(g_netInfo.ip,  "10.23.45.67");
+    strcpy(g_netInfo.mac, "ab:cd:ef:01:23:45");
+    #endif
 }
 
+/** Ack for query; no matter status changed or not **/
+void checkAndAckGetCharNetInfo(void)
+{
+    // netInfoData_init();   // ???????????????????? for test only
+    (void)reportgetCharNetInfo(&g_netInfo);
+}
 /**************************************************************************************************/
 void checkAndAckGetCharUpdate(void)
 {
@@ -484,7 +453,6 @@ RetStatus reportStatusByvoiceIdx(u8 idx)
     for (i = 0; i < MTABSIZE(voiceIdx2status); i++) {
         if (voiceIdx2status[i].idx == idx) {
             reportComponentStatus(voiceIdx2status[i].status_idx);
-            // reportComponentStatus(CINDEX_STANDARD);
             return POK;
         }
     }
@@ -496,10 +464,11 @@ RetStatus reportStatusByvoiceIdx(u8 idx)
 static const pair_msgType2u8ptr_t msgType2u8ptr[] = {
     {CGETCHAR_MOP,        &(g_componentStatus.mop)},
     {CGETCHAR_ROLLER,     &(g_componentStatus.roller)},
-    // {CGETCHAR_PUMP,       &(g_componentStatus.mop)},
+    {CGETCHAR_PUMP,       &(g_componentStatus.pump)},
     {CGETCHAR_CLEARWATER, &(g_componentStatus.clearWater)},
     {CGETCHAR_BATTERY,    &(g_componentStatus.battery)},
     {CGETCHAR_CHARGE,     &(g_componentStatus.charge)},
+    {CGETCHAR_STATUS,     &(g_componentStatus.status)},
     // {CGETCHAR_NETINFO,    &(g_componentStatus.charge)},
     // {CGETCHAR_UPDATE,     &(g_componentStatus.charge)},
 };

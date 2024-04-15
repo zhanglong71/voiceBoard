@@ -167,6 +167,7 @@ void UART2_IRQHandler(void)
         u8Data_t u8data;
         u8data.u8Val = UART_ReceiveData(UART2);
         u8FIFOin(&g_uart2RxQue, &u8data);
+        // u8FIFOin(&g_uart2TxQue, &u8data);  // ?????????????? debug only
     
         msg_t msg;
         msg.msgType = CMSG_UART2RX;     /** message CMSG_UART3RX **/

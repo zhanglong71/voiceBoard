@@ -48,6 +48,5 @@ RetStatus reportgetSsid(void);
 RetStatus reportgetIp(void);
 RetStatus reportgetMac(void);
 RetStatus reportgetRssi(void);
-RetStatus_pfunc_void_t getNetInfofunc(int index);
 
 #endif

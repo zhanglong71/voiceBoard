@@ -396,17 +396,18 @@ typedef enum {
 typedef struct ComponentField_s{
     u8 mop;
 	u8 roller;
-	// u8 pump;
+	u8 pump;
 	u8 battery;
 	u8 charge;
 	u8 clearWater;
+    u8 status;
 } ComponentField_t;
 
 typedef struct NetInfo_s{
-    char ssid[36];
+    char ssid[64];
     char ip[20];
     char mac[20];
-    int rssi;
+    char rssi[8];
     int count;
     int flag;
     /** 

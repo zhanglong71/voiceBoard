@@ -1,3 +1,5 @@
+#include "hk32f0301mxxc_it.h"
+
 #include "CONST.h"
 #include "ptype.h"
 #include "macro.h"
@@ -163,11 +165,13 @@ static void startAction(actionQueue_t *q, action_t * pAction)
 		break;
     case CVOP_PWRON:
         q->flag = (1<<1);
-        GPIO_VOPPWR_on();
+        // GPIO_VOPPWR_on();
+        MVopPower_on("VOP power on");
         break;
     case CVOP_PWROFF:
         q->flag = (1<<0);
-        GPIO_VOPPWR_off();
+        // GPIO_VOPPWR_off();
+        MVopPower_off("VOP power off");
         break;
         
 	default:
@@ -222,7 +226,8 @@ void vp_stop(void)
     ClrTimer_irq(g_promptQueue.timer);
     stopAction(&g_promptQueue);
     actionQueueClear(&g_promptQueue);
-    GPIO_VOPPWR_off();
+    // GPIO_VOPPWR_off();
+    MVopPower_off("VOP power off");
 }
 
 /**
@@ -234,7 +239,6 @@ void vp_stop1(void)
     ClrTimer_irq(g_promptQueue.timer);
     actionQueueClear(&g_promptQueue);
 }
-
 
 /** 
  * event queue process

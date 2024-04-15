@@ -48,22 +48,6 @@ RetStatus reportNobodyInfo(char* data, int len)
     return (POK);
 }
 
-#if 0
-RetStatus reportCommand(char* comm, int len)
-{
-    u8Data_t u8Data;
-    if ((comm == NULL) || (len <= 0)) {
-        return;
-    }
-    for (int i = 0; ((i < strlen(comm)) && (i < len)); i++) {
-        u8Data.u8Val = comm[i];
-        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    }
-
-    return (POK);
-}
-#endif
-
 RetStatus reportHeartbeat(void)
 {
     char buf[] = "heartbeat,0\n";
@@ -99,6 +83,7 @@ int reportConnectWifi(void *arg)
 #endif
 
 static const reportStatusBody_t reportStatusBodyArr[] = {
+    { CINDEX_CONNECTED,           "{\"status\":{\"status\":1}}"},             // on line
     // { CINDEX_UNKNOW,              "{\"mop\":{\"status\":0}}"},             // unknow Êú™Áü•Áä∂ÊÄÅ(‰∏ªÊú∫Êñ≠ÂºÄÂèäÂÖ∂ÂÆÉ)
     { CINDEX_STANDBY,             "{\"mop\":{\"status\":1}}"},             // standby ÂæÖÊú∫
     { CINDEX_STANDARD,            "{\"mop\":{\"status\":2}}"},                   // standard Ê†áÂáÜÊ®°Âºè
@@ -112,7 +97,7 @@ static const reportStatusBody_t reportStatusBodyArr[] = {
     { CINDEX_CLEARWATERNORMAL,    "{\"clearWater\":{\"status\":1}}"},             // clear water normal Ê∏ÖÊ∞¥Ê≠£Â∏∏
     { CINDEX_CLEARWATERSHORTAGE,  "{\"clearWater\":{\"status\":2}}"},             // clear water shortage Ê∏ÖÊ∞¥‰∏çË∂≥
     
-    // { CINDEX_PUMPNORMAL,          "{\"pump\":{\"status\":1}}"},                  // Ê∞¥Ê≥µÊ≠£Â∏∏     pumpNormal
+    { CINDEX_PUMPNORMAL,          "{\"pump\":{\"status\":1}}"},                  // Ê∞¥Ê≥µÊ≠£Â∏∏     pumpNormal
     // { CINDEX_PUMPOVERLOAD,        "{\"pump\":{\"status\":2}}"},                  // Ê∞¥Ê≥µËøáËΩΩ     pumpOverload
     // { CINDEX_PUMPCURRENTSMALL,    "{\"pump\":{\"status\":3}}"},                  // Ê∞¥Ê≥µÁîµÊµÅËøáÂ∞è pumpCurrentTooSmall
     
@@ -125,9 +110,8 @@ static const reportStatusBody_t reportStatusBodyArr[] = {
     { CINDEX_CHARGECOMPLETE,      "{\"charge\":{\"status\":3}}"},         // ÂÖÖÁîµÂÆåÊàê(Âå∫Âà´‰∏çÂÖÖÁîµÂú∫ÊôØ)
     { CINDEX_CHARGEFAULT,         "{\"charge\":{\"status\":4}}"},         // ÂÖÖÁîµÊïÖÈöú
 
-    { CINDEX_NETINFO,             "{\"netInfo\":{\"IP\":%s,\"RSSI\":%d,\"SSID\":%s}}"},         // ÁΩëÁªú‰ø°ÊÅØ
+    { CINDEX_NETINFO,             "{\"netInfo\":{\"IP\":%s,\"RSSI\":%s,\"SSID\":%s}}"},         // ÁΩëÁªú‰ø°ÊÅØ
     { CINDEX_UPDATE,              "{\"update\":{\"versoin\":1.0.1,\"introduction\":newest,\"progress\":100,\"bootTime\":60}}"},         // ÂçáÁ∫ß‰ø°ÊÅØ
-
 };
 
 void reportBatteryLevel(u8 arg)
@@ -152,55 +136,56 @@ void reportBatteryLevel(u8 arg)
     jsonTypeTx.jBody =buf;
     jsonTypeTx.jLen = strlen(jsonTypeTx.jBody);
 
-#if 1
     sm_sendData_once(&jsonTypeTx);
-#else
-    /** hhhhhhhhh head **/
-    len = strlen(jsonTypeTx.jHead);
-    for (int i = 0; i < len; i++) {
-        u8Data.u8Val = jsonTypeTx.jHead[i];
-        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    }
-    u8Data.u8Val = ',';
-    u8FIFOin_irq(&g_uart2TxQue, &u8Data); 
-    
-    /** lllllllll length **/
-    sprintf(buf, reportStatusBodyArr[idx].body, arg);
-    len = strlen(buf);
-    if (sprintf(buf, "%d", len)) {
-        for (int i = 0; i < strlen(buf); i++) {
-            u8Data.u8Val = buf[i];
-            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-        }
-    }
-    u8Data.u8Val = ',';
-    u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    
-    /** bbbbbbbbb body **/
-    sprintf(buf, reportStatusBodyArr[idx].body, arg);
-    for (int i = 0; i < strlen(buf); i++) {
-        u8Data.u8Val = buf[i];
-        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    }
-
-    u8Data.u8Val = '\n';
-    u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    return (TRUE);
-#endif
 }
 
 RetStatus reportgetCharNetInfo(NetInfo_t* netInfo)
 {
     jsonTL_t jsonTypeTx;
     char buf[U8FIFOSIZE]; 
-    // u8 len = 0;
-    // u8Data_t u8Data;
     u8 idx = 0;
 
     if (netInfo == NULL) {
         return (PERROR);
     }
+    
+#if 0
+    strncpy(g_netInfo.rssi, "-17", MTABSIZE(g_netInfo.rssi));
+    strncpy(g_netInfo.ssid, "DIISEA-ssid", MTABSIZE(g_netInfo.ssid));
+    strncpy(g_netInfo.ip,   "10.23.45.67", MTABSIZE(g_netInfo.ip));
+    strncpy(g_netInfo.mac,  "ab:cd:ef:01:23:45", MTABSIZE(g_netInfo.mac));
 
+    // "{\"netInfo\":{\"IP\":%s,\"RSSI\":%s,\"SSID\":%s}}"
+    strcpy(buf, "{\"netInfo\":{\"IP\":");
+    strcat(buf, g_netInfo.ip);
+    strcat(buf, ",\"RSSI\":");
+    strcat(buf, g_netInfo.rssi);
+    strcat(buf, ",\"SSID\":");
+    strcat(buf, g_netInfo.ssid);
+    strcat(buf, "}}");
+    
+    // sprintf(buf, "IP:%s, RSSI: %s, SSID: %s", netInfo->ip, netInfo->rssi, netInfo->ssid);
+    // sprintf(buf, "IP:%s, RSSI: %s, SSID: %s", g_netInfo.ip, g_netInfo.rssi, g_netInfo.ssid);
+    // sprintf(buf, "{\"netInfo\":{\"IP\":%s,\"RSSI\":%s,\"SSID\":%s}}", g_netInfo.ip, g_netInfo.rssi, g_netInfo.ssid);
+    
+    // sprintf(buf, "{\"netInfo\":{\"RSSI\":%s}}", g_netInfo.rssi);      // ø…“‘…˙–ß
+    // sprintf(buf, "{\"netInfo\":{\"SSID\":%s}}", g_netInfo.ssid);      // ø…“‘…˙–ß
+    // sprintf(buf, "{\"netInfo\":{\"IP\":%s}}", g_netInfo.ip);             // Œﬁ–ß
+    // sprintf(buf, "{\"netInfo\":{\"MAC\":%s}}", g_netInfo.mac);
+
+    //strncpy(buf, "IP: 10.23.45.67", MTABSIZE(buf));  // ø…“‘…˙–ß
+    //strncpy(buf, g_netInfo.ip, MTABSIZE(buf));       // ø…“‘…˙–ß
+    //strcpy(buf, g_netInfo.ip);                       // ø…“‘…˙–ß
+    //strcpy(buf, g_netInfo.mac);                        // ø…“‘…˙–ß
+    
+    // sprintf(buf, "IP: %s", "10.23.45.67");       // ø…“‘…˙–ß
+    // sprintf(buf, "%s", g_netInfo.ip);            // Œﬁ–ß
+    u8Data_t u8Data;
+    for (int i = 0; i < strlen(buf); i++) {
+        u8Data.u8Val = buf[i];
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+    }
+#else
     for (idx = 0; idx < MTABSIZE(reportStatusBodyArr); idx++) {
         if (reportStatusBodyArr[idx].index == CINDEX_NETINFO) {
             break;
@@ -211,45 +196,24 @@ RetStatus reportgetCharNetInfo(NetInfo_t* netInfo)
     }
 
     jsonTypeTx.jHead = "getChar";
-    sprintf(buf, reportStatusBodyArr[idx].body, netInfo->ip, netInfo->rssi, netInfo->ssid);
+    //sprintf(buf, reportStatusBodyArr[idx].body, netInfo->ip, netInfo->rssi, netInfo->ssid);
+    //sprintf(buf, reportStatusBodyArr[idx].body, "0:0:0:0", "-19", "DIISEA-ssid");
+    
+    // the complete command like this: "{\"netInfo\":{\"IP\":%s,\"RSSI\":%s,\"SSID\":%s}}"
+    strcpy(buf, "{\"netInfo\":{\"IP\":");
+    strcat(buf, netInfo->ip);
+    strcat(buf, ",\"RSSI\":");
+    strcat(buf, netInfo->rssi);
+    strcat(buf, ",\"SSID\":");
+    strcat(buf, netInfo->ssid);
+    strcat(buf, "}}");
+    
     jsonTypeTx.jBody = buf;
     jsonTypeTx.jLen = strlen(jsonTypeTx.jBody);
-#if 1
-    sm_sendData_once(&jsonTypeTx);
-		return (POK);
-#else
-    /** hhhhhhhhh head **/
-    len = strlen(jsonTypeTx.jHead);
-    for (int i = 0; i < len; i++) {
-        u8Data.u8Val = jsonTypeTx.jHead[i];
-        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    }
-    u8Data.u8Val = ',';
-    u8FIFOin_irq(&g_uart2TxQue, &u8Data); 
-    
-    /** lllllllll length **/
-    
-    len = strlen(buf);
-    if (sprintf(buf, "%d", len)) {
-        for (int i = 0; i < strlen(buf); i++) {
-            u8Data.u8Val = buf[i];
-            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-        }
-    }
-    u8Data.u8Val = ',';
-    u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    
-    /** bbbbbbbbb body **/
-    sprintf(buf, reportStatusBodyArr[idx].body, netInfo->ip, netInfo->rssi, netInfo->ssid);
-    for (int i = 0; i < strlen(buf); i++) {
-        u8Data.u8Val = buf[i];
-        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    }
 
-    u8Data.u8Val = '\n';
-    u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-    return (POK);
+    sm_sendData_once(&jsonTypeTx);
 #endif
+    return (POK);
 }
 
 /***********************************************************************
@@ -684,7 +648,6 @@ const pair_u8s8p_t commandBodyArr[] = {
     {CBODYINDEX_STATUS,         "status"},
     {CBODYINDEX_NETINFO,        "netInfo"},
     {CBODYINDEX_UPDATE,         "update"},
-    
     {CBODYINDEX_0,         "0"},
     {CBODYINDEX_1,         "1"},
     {CBODYINDEX_8,         "8"},
@@ -698,6 +661,7 @@ RetStatus getStringIndexbyString(const pair_u8s8p_t* keyArr, u8 keyArr_len, char
     }
     for (i = 0; i < keyArr_len; i++) {
         if (strstr(str, keyArr[i].second) != NULL) {
+        // if (strcmp(str, keyArr[i].second) == 0) {  /** parhaps end with another character() **/
             *str_idx = keyArr[i].first;
             return POK;
         }
@@ -727,7 +691,7 @@ RetStatus commandIdx2Message(char index, msgType_t* msg)
 /**
  * ºÏµΩ÷∏∂®µƒkey/len/body, ∂‘”¶µΩ÷∏∂®µƒœ˚œ¢; √ª”–∂‘”¶µΩœ˚œ¢µƒ(CMSG_NONE), –Ë“™Ω¯“ª≤Ω¥¶¿Ì
  **/
-const Quadruple_keylenbody_t identifyKeyBodyMsg[] = {
+const static Quadruple_keylenbody_t identifyKeyBodyMsg[] = {
     {CKEYINDEX_GETCHAR,       3,  CBODYINDEX_MOP,           CGETCHAR_MOP},
     {CKEYINDEX_GETCHAR,       6,  CBODYINDEX_ROLLER,        CGETCHAR_ROLLER},
     {CKEYINDEX_GETCHAR,       4,  CBODYINDEX_PUMP,          CGETCHAR_PUMP},
@@ -735,8 +699,8 @@ const Quadruple_keylenbody_t identifyKeyBodyMsg[] = {
     {CKEYINDEX_GETCHAR,       13, CBODYINDEX_BATTERYSTATUS, CGETCHAR_BATTERY},
     {CKEYINDEX_GETCHAR,       6,  CBODYINDEX_CHARGE,        CGETCHAR_CHARGE},
     {CKEYINDEX_GETCHAR,       6,  CBODYINDEX_STATUS,        CGETCHAR_STATUS},
-    {CKEYINDEX_GETCHAR,       7,  CBODYINDEX_NETINFO,       CREPORT_RSPERROR},
-    {CKEYINDEX_GETCHAR,       6,  CBODYINDEX_UPDATE,        CREPORT_RSPERROR},
+    {CKEYINDEX_GETCHAR,       7,  CBODYINDEX_NETINFO,       CGETCHAR_NETINFO},
+    {CKEYINDEX_GETCHAR,       6,  CBODYINDEX_UPDATE,        CGETCHAR_UPDATE},
     
     {CKEYINDEX_GETDEVINFO,    2,  CBODYINDEX_OK,            CGETDEVINFO_RSPOK},
     {CKEYINDEX_GETDEVINFO,    5,  CBODYINDEX_ERROR,         CGETDEVINFO_RSPERROR},
@@ -747,13 +711,13 @@ const Quadruple_keylenbody_t identifyKeyBodyMsg[] = {
     {CKEYINDEX_RESETNET,      2,  CBODYINDEX_OK,            CRESETNET_RSPOK},
     {CKEYINDEX_RESETNET,      4,  CBODYINDEX_FAIL,          CRESETNET_RSPFAIL},
 
-    {CKEYINDEX_HEARTBEAT,     0,  0,                        CHEART_BEAT},
-    {CKEYINDEX_GETDEVINFO,    0,  0,                        CGETDEVINFO_REQ},
- 
     {CKEYINDEX_GETWIFISTATUS, 1,  CBODYINDEX_8,             CCONN_ROUTE},
     {CKEYINDEX_GETWIFISTATUS, 1,  CBODYINDEX_1,             CCONN_CLOUD},
     {CKEYINDEX_GETWIFISTATUS, 1,  CBODYINDEX_0,             CDISCONN_CLOUD},
     
+    {CKEYINDEX_HEARTBEAT,     0,  0,                        CHEART_BEAT},
+    {CKEYINDEX_GETDEVINFO,    0,  0,                        CGETDEVINFO_REQ},
+ 
     {CKEYINDEX_PUTSYNC,       0,  0,                        CPUT_SYNC},
     // {CKEYINDEX_SCANWIFI,      0,  0,                        CSCAN_WIFI},
     // {CKEYINDEX_CONNECTWIFI,   0,  0,                        CCONN_WIFI},
@@ -771,7 +735,8 @@ RetStatus KeyBody2Msg(u8 key_idx, u8 body_len, u8 body_idx, msgType_t* msg)
     int i;
     if (body_len == 0) {
         for (i = 0; i < MTABSIZE(identifyKeyBodyMsg); i++) {
-            if ((identifyKeyBodyMsg[i].key_idx == key_idx)) {
+            if ((identifyKeyBodyMsg[i].key_idx == key_idx)
+                && (identifyKeyBodyMsg[i].body_len == 0)) {
                 *msg = identifyKeyBodyMsg[i].msg;
                 return POK;
             }
@@ -819,10 +784,10 @@ objType_t sm_receiveData(char *data)
     static u16 s_bodyLen = 0;
     static u8 s_keyIdx = 0;
     static u8 offset = 0;
-    u8Data_t u8Data;
+    // u8Data_t u8Data;
     objType_t objType;
     msg_t msg;
-    u8 chData;
+    u8 chData = '\0';
     u8 bodyIdx;
     // u8 i;
 
@@ -830,6 +795,12 @@ objType_t sm_receiveData(char *data)
         return obj_none;
     }
     (void)u8FIFO_last(&g_uart2RxQue, &chData);
+    // ??????????????????????????????
+#if 0 
+        u8Data.u8Val = chData;
+        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+#endif
+    // ??????????????????????????????
 
     if (s_smStatus == sm_init) {   /** identifing key **/
         if (chData != ',') {
@@ -839,46 +810,21 @@ objType_t sm_receiveData(char *data)
         if (u8FIFO_get(&g_uart2RxQue, 0, (u8*)data) != TRUE) {
             return obj_none;
         }
-#if 1
+
+        /** identify the command key **/
         if (getStringIndexbyString(commandKeyArr, MTABSIZE(commandKeyArr), data, &s_keyIdx) == POK) {
             s_bodyLen = 0;
             s_smStatus = sm_receiveLenStep2;
+                #if 0  // ??????????????????????????
+                u8Data.u8Val = 'K';
+                u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                #endif  // ??????????????????????????
             return obj_key;
         } else {
             /** unrecongized **/
             u8FIFOinit_irq(&g_uart2RxQue);  // !!!!!!
             return obj_none;
         }
-#else
-        for(i = 0; i < getCommandKeyArrLen(); i++) {       /** key identify **/
-            // if (strstr(data, getCommandKey(i)->jHead) != NULL) {
-            if (strstr(data, getCommandKey(i)->second) != NULL) {
-                break;
-            }
-        }
-
-        if(i < getCommandKeyArrLen()) {
-            // s_keyIdx = i;
-            s_keyIdx = getCommandKey(i)->first;
-            s_bodyLen = 0 ;
-            
-            /** 
-             * ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩkeyÔøΩÔøΩÔøΩÔøΩ ∂ÔøΩ£¨≤ÔøΩÔøΩÔøΩ“™ sm_receiveLenStep1 ◊¥Ã¨
-             * ÔøΩÔøΩ sm_receiveLenStep2 ◊¥Ã¨ ∂ÔøΩ≥§∂ÔøΩ
-             **/
-            s_smStatus = sm_receiveLenStep2;
-            return obj_key;
-        }else {
-            #if 0
-            /** !!! wifi module working verify!!! **/
-            if (checkResponseTest(data)) {
-                s_smStatus = sm_receiveBody;
-                s_bodyLen = 2;
-                s_keyIdx = CTestWIFIkeyIdx;   /** »°“ªÔøΩÔøΩÔøΩÔøΩ–ß÷µ ÔøΩÔøΩÔøΩ‚¥¶ÔøΩÔøΩ **/
-            }
-            #endif
-        }
-#endif
     } else if (s_smStatus == sm_receiveLenStep2) {    /** identifing length  **/
         if ((chData == ' ') || (chData == '\t')) { // ignore the blank and tab
             return obj_none;
@@ -886,12 +832,16 @@ objType_t sm_receiveData(char *data)
             s_bodyLen = (s_bodyLen * 10) + (chData - '0');
         } else if (chData == ',') {
             #if 1
-            digit2ascii(s_bodyLen, data);
+            digit2ascii(s_bodyLen, data);  // ignore
             #else
             sprintf(data, "%d", s_bodyLen);  // Œ¥÷™‘≠“Úµƒ ˝æ› ß∞‹! ∆˙”√ !!!!!!
             #endif
             s_smStatus = sm_receiveBody;
             offset = u8FIFOlength(&g_uart2RxQue);
+                #if 0  // ??????????????????????????
+                u8Data.u8Val = 'L';
+                u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                #endif  // ??????????????????????????
             return obj_len;
         } else if (chData == '\n') {
             u8FIFOinit_irq(&g_uart2RxQue);
@@ -899,28 +849,8 @@ objType_t sm_receiveData(char *data)
             
             #if 1
             /** nobody message identified **/
-            
-            // if (commandIdx2Message(s_keyIdx, &(msg.msgType)) != PERROR) {
             if (KeyBody2Msg(s_keyIdx, 0, 0, &(msg.msgType)) != PERROR) {
                 msgq_in_irq(&g_msgq, &msg);
-            }
-            #else
-            if (MisDevinfo(s_keyIdx) == TRUE) {
-                /** get devinfo **/
-                msg.msgType = CGETDEVINFO_REQ;
-                msgq_in_irq(&g_msgq, &msg);
-                
-                return obj_none;
-            } else if (MisHeartbeatCommand(s_keyIdx) == TRUE) {
-                msg.msgType = CHEART_BEAT;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else if (MisPutSync(s_keyIdx) == TRUE) {
-                msg.msgType = CPUT_SYNC;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else {
-                /** end transmit but invalid data **/
             }
             #endif
         }
@@ -928,8 +858,6 @@ objType_t sm_receiveData(char *data)
     } else if (s_smStatus == sm_receiveBody) {    /** identifing body **/
         // ??????????????????????????????
         #if 0
-            u8Data.u8Val = '!';
-            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
             u8Data.u8Val = chData;
             u8FIFOin_irq(&g_uart2TxQue, &u8Data);
         #endif
@@ -939,161 +867,44 @@ objType_t sm_receiveData(char *data)
             return obj_none;
         }
         if (chData == '\n') {
-            ClrTimer_irq(&g_timer[1]);
+            ClrTimer_irq(&g_timer[1]);     // !!!!!! fellow the Dm6
             u8FIFOinit_irq(&g_uart2RxQue);
             s_smStatus = sm_init;   // over 
-            
-    #if 1
-        /** step 1: identify the body **/
-        if (getStringIndexbyString(commandBodyArr, MTABSIZE(commandBodyArr), data, &bodyIdx) != POK) {
-            /**unrecognized the body **/
-            return obj_body;
-        }
-        
-        /** step 2: identify the body class A, then notify by msg **/
-        if (KeyBody2Msg(s_keyIdx, s_bodyLen, bodyIdx, &(msg.msgType)) == POK) {
-            msgq_in_irq(&g_msgq, &msg);
-        }
-
-        /** step 3: identify the body class B, need to further identify **/
-        if (KeyBody2objType(s_keyIdx, &objType) == POK) {
-            return objType;
-        }
-    #else
-            if (MisDevinfoRespOk(s_keyIdx, s_bodyLen, data)) {
-                /** response devinfo **/
-                msg.msgType = CGETDEVINFO_RSPOK;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else if (MisDevinfoRespErr(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGETDEVINFO_RSPERROR;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else if(MisReportSericeRespOk(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CREPORT_RSPOK;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else if(MisReportSericeRespErr(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CREPORT_RSPERROR;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else if(MisGetCharMopStatus(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGETCHAR_MOP;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-
-            } else if(MisGetCharStatus(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGETCHAR_STATUS;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else if(MisGetCharRollerStatus(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGETCHAR_ROLLER;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else if(MisGetCharClearWaterStatus(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGETCHAR_CLEARWATER;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-                #if 0  /** D7 no pump status **/
-            } else if(MisGetCharPumpStatus(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGETCHAR_PUMP;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-                #endif
-            } else if(MisGetCharBatteryStatus(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGETCHAR_BATTERY;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else if(MisGetCharChargeStatus(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGETCHAR_CHARGE;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else if(MisGetCharNetInfoStatus(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGETCHAR_NETINFO;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else if(MisGetCharUpdateStatus(s_keyIdx, s_bodyLen, data)) {
-                msg.msgType = CGETCHAR_UPDATE;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-
-            } else if(MisPutChar(s_keyIdx)) {
-                msg.msgType = CPUT_CHAR;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else if(MisgetWifiStatus(s_keyIdx)) {
-                // msg.msgType = CWIFI_STATUS;
-                // msgq_in_irq(&g_msgq, &msg);
-                i = atoi(data);
-                if(MisgetWifiStatusExpect(s_keyIdx, s_bodyLen, i, 1)) {
-                    msg.msgType = CCONN_CLOUD;
-                    msgq_in_irq(&g_msgq, &msg);
-                } else if(MisgetWifiStatusExpect(s_keyIdx, s_bodyLen, i, 8)) {
-                    msg.msgType = CCONN_ROUTE;
-                    msgq_in_irq(&g_msgq, &msg);
-                } else {
-                    msg.msgType = CDISCONN_CLOUD;
-                    msgq_in_irq(&g_msgq, &msg);
-                }
-                return obj_none;
-            } else if(MisScanWifi(s_keyIdx)) {
-                /** need one global variety store the rssi **/
-                msg.msgValue = s_bodyLen;
-                msg.msgType = CSCAN_WIFI;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else if(MisconnectWifi(s_keyIdx)) {
-                /** need one global variety store the connection status **/
-                msg.msgType = CCONN_WIFI;
-                msgq_in_irq(&g_msgq, &msg);
-                return obj_none;
-            } else if(MisResetNet(s_keyIdx)) {
-                if (MisRespOk(s_bodyLen, data)) {
-                    msg.msgType = CRESETNET_RSPOK;
-                    msgq_in_irq(&g_msgq, &msg);
-                    return obj_none;
-                } else if (MisRespFail(s_bodyLen, data)) {
-                    msg.msgType = CRESETNET_RSPFAIL;
-                    msgq_in_irq(&g_msgq, &msg);
-                    return obj_none;
-                }
-            } else if (MisGetSsid(s_keyIdx)) {
-                //if (strlen(data) == s_bodyLen) {
-                //}
-                return obj_SSID;
-            } else if (MisGetIp(s_keyIdx)) {
-                return obj_IP;
-            } else if (MisGetMac(s_keyIdx)) {
-                return obj_MAC;
-            } else if (MisGetRssi(s_keyIdx)) {
-                if (!(MisGetRssiFail(s_keyIdx, s_bodyLen, data))) {
-                    return obj_RSSI;
-                } else { 
-                    // return obj_RSSI;
-                }
-            } else {
+                    #if 0  // ??????????????????????????
+                    u8Data.u8Val = 'B';
+                    u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                    #endif  // ??????????????????????????
+        #if 1
+            /** step 1: identify the body **/
+            if (getStringIndexbyString(commandBodyArr, MTABSIZE(commandBodyArr), data, &bodyIdx) != POK) {
+                /**unrecognized the body **/
+                return obj_body;
             }
-      #endif
+        
+            /** step 2: identify the body class A, then notify by msg **/
+            if (KeyBody2Msg(s_keyIdx, s_bodyLen, bodyIdx, &(msg.msgType)) == POK) {
+                msgq_in_irq(&g_msgq, &msg);
+                #if 0  // ??????????????????????????
+                u8Data.u8Val = 'M';
+                u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                #endif  // ??????????????????????????
+            }
+
+            /** step 3: identify the body class B, need to further identify **/
+            if (KeyBody2objType(s_keyIdx, &objType) == POK) {
+                return objType;
+            }
+        #endif
             return obj_body;
         }
 
         if (u8FIFOisFull(&g_uart2RxQue) == TRUE) {
             /** warning...  buf full **/
+            #if 0
             u8Data.u8Val = 'F';
             u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-        } else {
-            // ??????????????????????????????
-            #if 0
-            u8Data.u8Val = '!';
-            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-            u8Data.u8Val = chData;
-            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-            u8Data.u8Val = g_uart2RxQue.in;
-            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-            u8Data.u8Val = g_uart2RxQue.out;
-            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
             #endif
-           // ??????????????????????????????
+        } else {
         }
         if (u8FIFOlength(&g_uart2RxQue) >= (s_bodyLen + offset + 1)      /** strlen(",x,") + the "" end of body + the \n end of body **/) {
             u8FIFOinit_irq(&g_uart2RxQue);
@@ -1136,23 +947,5 @@ RetStatus reportgetRssi(void)
 {
     char buf[] = "getRssi,0\n";
     return reportNobodyInfo(buf, strlen(buf));
-}
-
-RetStatus_pfunc_void_t getNetInfofunc(int index)
-{
-#if 0
-    if (index == 1) {
-        return reportgetSsid;
-    } else if (index == 2) {
-        return reportgetIp;
-    } else if (index == 3) {
-        return reportgetMac;
-    } else if (index == 4) {
-        return reportgetRssi;
-    }
-    return doNothing;
-#else
-    return doNothing;
-#endif
 }
 

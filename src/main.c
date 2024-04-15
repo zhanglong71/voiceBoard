@@ -62,7 +62,7 @@
 //static void Uart1SendDatas(uint8_t *p, uint8_t len);
 //static void Uart2SendDatas(uint8_t *p, uint8_t len);
 /* global variables ----------------------------------------------------------*/
-#if 1
+
  fstack_t g_fstack;
  msgq_t g_msgq;
  msg_t msg;
@@ -90,19 +90,30 @@ actionQueue_t g_promptQueue;
 u8 g_IT_uart1_tmr = 0; // used uart1 received timeover
 /******************************************************************************/
 NetInfo_t g_netInfo;
+
 /**
  * record wifi net information
  **/
 /******************************************************************************/
 ComponentField_t g_componentStatus = {CINDEX_STANDBY,  // mop --- standby
                                       CINDEX_ROLLERNORMAL,  // roller --- 滚筒正常
-                                      // CINDEX_PUMPNORMAL,  // pump --- 水泵正常
+                                      CINDEX_PUMPNORMAL,  // pump --- 水泵正常
                                       CINDEX_BATTERYNORMAL,  // battery --- 电池正常
                                       CINDEX_UNCHARGED,  // charge --- 未充电
-                                      CINDEX_CLEARWATERNORMAL   // clearWater --- 清水正常
+                                      CINDEX_CLEARWATERNORMAL,   // clearWater --- 清水正常
+                                      CINDEX_CONNECTED   // connected
                                       };
 /******************************************************************************/
-#endif 
+/**
+ * UART1: GPIOA.2/GPIOA.3
+ * UART2: GPIOC.3/GPIOC.4
+ * VOP data : GPIOD.2
+ * VOP Power: GPIOD.3
+ *
+ * Key:       GPIOC.6
+ * wifi_en:   GPIOC.5
+ **/
+/******************************************************************************/
 /**
   * @brief  Main program.
   * @param  None

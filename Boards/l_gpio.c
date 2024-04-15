@@ -46,7 +46,7 @@ void GPIO_init485(void)
   M485TR_R("不发送时，485处于接收状态");
 }
 
-
+#if 0
 void GPIO_VOPPWR_on(void)
 {
     GPIO_SetBits(GPIOD, GPIO_Pin_3);
@@ -56,6 +56,7 @@ void GPIO_VOPPWR_off(void)
 {
     GPIO_ResetBits(GPIOD, GPIO_Pin_3);
 }
+#endif
 
 void watchDog_init(void)
 {
@@ -84,7 +85,7 @@ void watchDog_init(void)
 }
 
 /**********************
- * for test 
+ * for output pin 
  **********************/
 void GPIO_init4led(void)
 {
@@ -97,13 +98,15 @@ void GPIO_init4led(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;    // GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOD, &GPIO_InitStructure);
 
+  /** wifi enable **/
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
+  GPIO_SetBits(GPIOC, GPIO_Pin_5);
 
-  /** led2 **/
+  /** test only **/
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
 }
@@ -138,7 +141,7 @@ void GPIO_led_blink(void)
 #endif
 }
 
-void GPIO_PC06_K11INPUT(void) // used wifi_EN pin for test ??????????????????????????????????
+void GPIO_PC06_K11INPUT(void) // for test ??????????????????????????????????
 {
     GPIO_InitTypeDef        GPIO_InitStructure;
    
@@ -152,6 +155,7 @@ void GPIO_PC06_K11INPUT(void) // used wifi_EN pin for test ?????????????????????
     GPIO_Init(GPIOC, &GPIO_InitStructure);
 }
 
+#if 0
 void test_outPC05byPC06(void)  // used wifi_EN pin for test ??????????????????????????????????
 {
 #if 1
@@ -165,4 +169,5 @@ void test_outPC05byPC06(void)  // used wifi_EN pin for test ????????????????????
     }
 #endif
 }
+#endif
 
