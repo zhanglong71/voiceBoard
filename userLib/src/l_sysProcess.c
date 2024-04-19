@@ -22,10 +22,10 @@ int sysProcess(void *pMsg)
     //msg_t msg;
 
     int iRet = TRUE;
-    char buf[U8FIFOSIZE];
+    // char buf[U8FIFOSIZE];
     u8Data_t u8Data;
     //u8 pCh = NULL;
-    kv_t KVarr[CKVTABSIZE];
+    // kv_t KVarr[CKVTABSIZE];
     int flag;
     // u8 len = 0;
     u8 i = 0;
@@ -35,59 +35,59 @@ int sysProcess(void *pMsg)
     case CMSG_UART2RX:
         if(u8FIFOisEmpty(&g_uart2RxQue) != TRUE) {
             /** do something to uart2 data **/
-            objType_t objtype = sm_receiveData(buf);
+            objType_t objtype = sm_receiveData(g_buf);
             if (objtype == obj_none) {
                 /** nothing **/
             } else if ((objtype == obj_key) || (objtype == obj_len) || (objtype == obj_body)) {
                 /** do something **/
                 /** what ? **/
             } else if (objtype == obj_SSID) {
-                memset(KVarr, 0, sizeof(KVarr));
-                JsonParseL0(buf, KVarr);
-                for (u8 i = 0; ((i < MTABSIZE(KVarr)) && (KVarr[i].KVIndex > 0)); i++) {
-                    if (strstr(KVarr[i].key, "status") && strstr(KVarr[i].value, "1")) {
+                memset(g_KVarr, 0, sizeof(g_KVarr));
+                JsonParseL0(g_buf, g_KVarr);
+                for (u8 i = 0; ((i < MTABSIZE(g_KVarr)) && (g_KVarr[i].KVIndex > 0)); i++) {
+                    if (strstr(g_KVarr[i].key, "status") && strstr(g_KVarr[i].value, "1")) {
                         flag |= (1 << 1);
                     }
-                    if (strstr(KVarr[i].key, "ssid")) {
+                    if (strstr(g_KVarr[i].key, "ssid")) {
                         flag |= (1 << 2);
-                        strncpy(g_netInfo.ssid, KVarr[i].value, sizeof(g_netInfo.ssid));  /** 未知长度，限制长度上限**/
+                        strncpy(g_netInfo.ssid, g_KVarr[i].value, sizeof(g_netInfo.ssid));  /** 未知长度，限制长度上限**/
                     }
                 }
                 if ((flag & 0x60) == 0x60) {
                     g_netInfo.flag |= (1 << 0);
                 }
             } else if (objtype == obj_IP) {
-                memset(KVarr, 0, sizeof(KVarr));
-                JsonParseL0(buf, KVarr);
-                for (u8 i = 0; ((i < MTABSIZE(KVarr)) && (KVarr[i].KVIndex > 0)); i++) {
-                    if (strstr(KVarr[i].key, "status") && strstr(KVarr[i].value, "1")) {
+                memset(g_KVarr, 0, sizeof(g_KVarr));
+                JsonParseL0(g_buf, g_KVarr);
+                for (u8 i = 0; ((i < MTABSIZE(g_KVarr)) && (g_KVarr[i].KVIndex > 0)); i++) {
+                    if (strstr(g_KVarr[i].key, "status") && strstr(g_KVarr[i].value, "1")) {
                         flag |= (1 << 1);
                     }
-                    if (strstr(KVarr[i].key, "ip")) {
+                    if (strstr(g_KVarr[i].key, "ip")) {
                         flag |= (1 << 2);
-                        strncpy(g_netInfo.ip, KVarr[i].value, sizeof(g_netInfo.ip));
+                        strncpy(g_netInfo.ip, g_KVarr[i].value, sizeof(g_netInfo.ip));
                     }
                 }
                 if ((flag & 0x60) == 0x60) {
                     g_netInfo.flag |= (1 << 1);
                 }
             } else if (objtype == obj_MAC) {
-                memset(KVarr, 0, sizeof(KVarr));
-                JsonParseL0(buf, KVarr);
-                for (u8 i = 0; ((i < MTABSIZE(KVarr)) && (KVarr[i].KVIndex > 0)); i++) {
-                    if (strstr(KVarr[i].key, "status") && strstr(KVarr[i].value, "1")) {
+                memset(g_KVarr, 0, sizeof(g_KVarr));
+                JsonParseL0(g_buf, g_KVarr);
+                for (u8 i = 0; ((i < MTABSIZE(g_KVarr)) && (g_KVarr[i].KVIndex > 0)); i++) {
+                    if (strstr(g_KVarr[i].key, "status") && strstr(g_KVarr[i].value, "1")) {
                         flag |= (1 << 1);
                     }
-                    if (strstr(KVarr[i].key, "mac")) {
+                    if (strstr(g_KVarr[i].key, "mac")) {
                         flag |= (1 << 2);
-                        strncpy(g_netInfo.mac, KVarr[i].value, sizeof(g_netInfo.mac));
+                        strncpy(g_netInfo.mac, g_KVarr[i].value, sizeof(g_netInfo.mac));
                     }
                 }
                 if ((flag & 0x60) == 0x60) {
                     g_netInfo.flag |= (1 << 2);
                 }
             } else if (objtype == obj_RSSI) {
-                strncpy(g_netInfo.rssi, buf, sizeof(g_netInfo.rssi));
+                strncpy(g_netInfo.rssi, g_buf, sizeof(g_netInfo.rssi));
                 g_netInfo.flag |= (1 << 3);
             }
         }
@@ -103,15 +103,15 @@ int sysProcess(void *pMsg)
          * receive: {"user":voi,"ask":ver}
          * ack:     {"voi":user,"ver":v001}
          ************************************/
-        memset(buf, 0, sizeof(buf));
-        memset(KVarr, 0, sizeof(KVarr));
+        memset(g_buf, 0, sizeof(g_buf));
+        memset(g_KVarr, 0, sizeof(g_KVarr));
         
  #if 1
-        for(i = 0; ((i < MTABSIZE(buf)) && (u8FIFOout_irq(&g_uart1RxQue, &u8Data) == TRUE)); i++) {
-            buf[i] = u8Data.u8Val;
+        for(i = 0; ((i < MTABSIZE(g_buf)) && (u8FIFOout_irq(&g_uart1RxQue, &u8Data) == TRUE)); i++) {
+            g_buf[i] = u8Data.u8Val;
         }
-        if (i < MTABSIZE(buf)) {
-            buf[i] = '\0';
+        if (i < MTABSIZE(g_buf)) {
+            g_buf[i] = '\0';
         } else {
             u8FIFOinit_irq(&g_uart1RxQue);  /** !!!!!!!!!!!! **/
             /** something wrong happened **/
@@ -129,27 +129,27 @@ int sysProcess(void *pMsg)
             rs485_stor_irq(&u8Data);
         }
  #else
-        if (JsonParseL0(buf, KVarr)) {
+        if (JsonParseL0(g_buf, g_KVarr)) {
             int voi = 0;
             u8 flag = 0;
             u8 src_idx = 0;
             u8 u8Seq = 0;
             static u8 u8Seq_last = 0xff;
             //u8 voi_idx = 0;
-            for (u8 i = 0; ((i < MTABSIZE(KVarr)) && (KVarr[i].KVIndex > 0)); i++) {
-                 if (strstr(KVarr[i].value, "voi")) {
+            for (u8 i = 0; ((i < MTABSIZE(g_KVarr)) && (g_KVarr[i].KVIndex > 0)); i++) {
+                 if (strstr(g_KVarr[i].value, "voi")) {
                      Mset_bit(flag,1);
                      src_idx = i;
                  }
-                 if (strstr(KVarr[i].key, "PLY")) {
+                 if (strstr(g_KVarr[i].key, "PLY")) {
                      Mset_bit(flag,2);
-                     voi = atoi(KVarr[i].value);
+                     voi = atoi(g_KVarr[i].value);
                  }
-                 if (strstr(KVarr[i].key, "SEQ")) {
+                 if (strstr(g_KVarr[i].key, "SEQ")) {
                      Mset_bit(flag,3);
-                     u8Seq = atoi(KVarr[i].value);
+                     u8Seq = atoi(g_KVarr[i].value);
                  }
-                 if (strstr(KVarr[i].key, "ask") && strstr(KVarr[i].value, "ver")) {
+                 if (strstr(g_KVarr[i].key, "ask") && strstr(g_KVarr[i].value, "ver")) {
                      Mset_bit(flag,4);
                  }
             }
@@ -168,14 +168,14 @@ int sysProcess(void *pMsg)
                     setStatusByvoiceIdx((u8)voi);
                     reportStatusByvoiceIdx((u8)voi);
                     /** construct ack**/
-                    generateVoiceAckOk(KVarr[src_idx].key, u8Seq_last);
+                    generateVoiceAckOk(g_KVarr[src_idx].key, u8Seq_last);
                 } else {
-                    generateVoiceAckErr(KVarr[src_idx].key, u8Seq_last);
+                    generateVoiceAckErr(g_KVarr[src_idx].key, u8Seq_last);
                 }
             }
             
             if (Mget_bit(flag, 1) && Mget_bit(flag, 4)) {
-                generateVoiceAckVer(KVarr[src_idx].key, CVERSION);
+                generateVoiceAckVer(g_KVarr[src_idx].key, CVERSION);
             }
         };
 #endif

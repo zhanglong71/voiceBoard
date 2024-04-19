@@ -784,7 +784,7 @@ objType_t sm_receiveData(char *data)
     static u16 s_bodyLen = 0;
     static u8 s_keyIdx = 0;
     static u8 offset = 0;
-    // u8Data_t u8Data;
+    u8Data_t u8Data;
     objType_t objType;
     msg_t msg;
     u8 chData = '\0';
@@ -794,7 +794,10 @@ objType_t sm_receiveData(char *data)
     if(u8FIFOisEmpty(&g_uart2RxQue) == TRUE) { /** no data !!! **/
         return obj_none;
     }
-    (void)u8FIFO_last(&g_uart2RxQue, &chData);
+    //(void)u8FIFO_last(&g_uart2RxQue, &chData);
+    if (u8FIFOout2_irq(&g_uart2RxQue, &u8Data) == TRUE) {
+        chData = u8Data.u8Val;
+    }
     // ??????????????????????????????
 #if 0 
         u8Data.u8Val = chData;

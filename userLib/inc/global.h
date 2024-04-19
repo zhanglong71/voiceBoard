@@ -26,6 +26,9 @@ extern u8 g_IT_uart1_tmr;
 extern NetInfo_t g_netInfo;
 extern ComponentField_t g_componentStatus;
 
+extern char g_buf[U8FIFOSIZE];
+extern kv_t g_KVarr[CKVTABSIZE];
+
 #if 0
 extern	u8	g_IT_flag;
 extern  int g_tmr_iVopBusy;

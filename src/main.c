@@ -104,6 +104,9 @@ ComponentField_t g_componentStatus = {CINDEX_STANDBY,  // mop --- standby
                                       CINDEX_CONNECTED   // connected
                                       };
 /******************************************************************************/
+char g_buf[U8FIFOSIZE];    // Temporary variables for uart received data resolve
+kv_t g_KVarr[CKVTABSIZE];  // Temporary variables for uart received data resolve
+/******************************************************************************/
 /**
  * UART1: GPIOA.2/GPIOA.3
  * UART2: GPIOC.3/GPIOC.4

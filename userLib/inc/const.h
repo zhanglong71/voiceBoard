@@ -152,7 +152,7 @@
 #define CINDEX_PUTSYNC                (14)
 #endif
 
-#define CKEYINDEX_GETDEVINFO             (0)
+#define CKEYINDEX_NONE                   (0)
 #define CKEYINDEX_HEARTBEAT              (1)
 #define CKEYINDEX_PUTCHAR                (2)
 #define CKEYINDEX_GETCHAR                (3)
@@ -171,9 +171,10 @@
 #define CKEYINDEX_GETIP                  (12)
 #define CKEYINDEX_GETMAC                 (13)
 #define CKEYINDEX_PUTSYNC                (14)
+#define CKEYINDEX_GETDEVINFO             (15)
 
 /*******************************************************************************/
-#define CBODYINDEX_OK                (0)
+#define CBODYINDEX_NONE              (0)
 #define CBODYINDEX_FAIL              (1)
 #define CBODYINDEX_ERROR             (2)
 #define CBODYINDEX_MOP               (3)
@@ -189,6 +190,7 @@
 #define CBODYINDEX_0                 (12)
 #define CBODYINDEX_1                 (13)
 #define CBODYINDEX_8                 (14)
+#define CBODYINDEX_OK                (15)
 
 
 /*******************************************************************************/

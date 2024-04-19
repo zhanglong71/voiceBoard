@@ -49,6 +49,7 @@ void u8FIFOinit(u8FIFO_t *q)
 {
 	q->in = 0;
 	q->out = 0;
+	q->out2 = 0;
 }
 
 void u8FIFOinit_irq(u8FIFO_t *q)
@@ -132,15 +133,40 @@ int u8FIFO_get(const u8FIFO_t *q, u8 offset, u8 *dst)
 }
 
 /*******************************************************************************
- * the FIFO buf pointer
+ * the FIFO data
  *******************************************************************************/
- #if 0
-u8* u8FIFO_Buf(const u8FIFO_t *q)
+ int u8FIFOisEmpty2(const u8FIFO_t *q)
 {
-    return q->buf + q->out;
+	if(q->in == q->out2)
+	{
+		return TRUE;
+	}
+	return	FALSE;
 }
-#endif
+int u8FIFOout2(u8FIFO_t *q, u8Data_t *u8Data)
+{
+    if(u8FIFOisEmpty2(q))
+    {
+        return  FALSE;
+    }
+    
+    u8Data->u8Val = q->buf[q->out2];
+    q->out2 = ((q->out2 + 1) % U8FIFOSIZE);
 
+    return TRUE;
+}
+int u8FIFOout2_irq(u8FIFO_t *q, u8Data_t *u8Data)
+{
+    int iRet;
+
+    IRQ_disable();
+    iRet = u8FIFOout2(q, u8Data);
+	IRQ_enable();
+	    
+	return	iRet;
+}
+
+#if 0
 /*******************************************************************************
  * get data the last data from FIFO, and no change FIFO pointer
  *******************************************************************************/
@@ -157,6 +183,7 @@ int u8FIFO_last(const u8FIFO_t *q, u8* ch)
     }
     return TRUE;
 }
+#endif
 /*******************************************************************************/
 
 /*******************************************************************************/

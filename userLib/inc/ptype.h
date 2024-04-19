@@ -253,6 +253,7 @@ typedef struct u8Data_s{
 typedef struct u8FIFO_s {
     u8 in;
     u8 out;
+    u8 out2;
     //u8 len;
 	//u8 __pad1;
     u8 buf[U8FIFOSIZE];     /** 16 bytes **/
