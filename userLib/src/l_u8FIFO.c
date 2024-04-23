@@ -133,7 +133,7 @@ int u8FIFO_get(const u8FIFO_t *q, u8 offset, u8 *dst)
 }
 
 /*******************************************************************************
- * the FIFO data
+ * the FIFO interface2, have nothing todo with interface1
  *******************************************************************************/
  int u8FIFOisEmpty2(const u8FIFO_t *q)
 {
@@ -143,6 +143,15 @@ int u8FIFO_get(const u8FIFO_t *q, u8 offset, u8 *dst)
 	}
 	return	FALSE;
 }
+int u8FIFOlength2(u8FIFO_t *q)
+{
+	if(q->in < q->out2)
+	{
+		return (U8FIFOSIZE + q->in - q->out2);
+	}
+	return	(q->in - q->out2);
+}
+
 int u8FIFOout2(u8FIFO_t *q, u8Data_t *u8Data)
 {
     if(u8FIFOisEmpty2(q))

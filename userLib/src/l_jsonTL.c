@@ -893,9 +893,7 @@ objType_t sm_receiveData(char *data)
             return obj_none;
         }
     } else if (s_smStatus == sm_receiveLenStep2) {    /** identifing length  **/
-        if ((chData == ' ') || (chData == '\t')) { // ignore the blank and tab
-            return obj_none;
-        } else if (isdigit(chData)) {   // the valid number
+        if (isdigit(chData)) {   // the valid number
             s_bodyLen = (s_bodyLen * 10) + (chData - '0');
         } else if (chData == ',') {
             #if 1
@@ -904,8 +902,11 @@ objType_t sm_receiveData(char *data)
             sprintf(data, "%d", s_bodyLen);  // Î´ÖªÔ­ÒòµÄÊý¾ÝÊ§°Ü! ÆúÓÃ !!!!!!
             #endif
             s_smStatus = sm_receiveBody;
-            offset = u8FIFOlength(&g_uart2RxQue);
+            /** !!! **/
+            offset = u8FIFOlength(&g_uart2RxQue) - u8FIFOlength2(&g_uart2RxQue);
             return obj_len;
+        } else if ((chData == ' ') || (chData == '\t')) { // ignore the blank and tab
+            return obj_none;
         } else if (chData == '\n') {
             u8FIFOinit_irq(&g_uart2RxQue);
             s_smStatus = sm_init;   // over
@@ -930,9 +931,11 @@ objType_t sm_receiveData(char *data)
         #if 1
             /** step 1: no need identify the body here **/
             if (KeyBody2objType(s_keyIdx, &objType) == POK) {
-                #if 0 // ????????????????????????
-                u8Data.u8Val = '0' + objType;
-                u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                #if 1 // ????????????????????????
+                for (int i = 0; i < strlen(data); i++) {
+                    u8Data.u8Val = data[i];
+                    u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                }
                 #endif // ???????????????????????å
                 return objType;
             }

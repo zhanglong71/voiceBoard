@@ -14,6 +14,7 @@ int u8FIFOout_irq(u8FIFO_t *q, u8Data_t *u8Data);
 int u8FIFO_get(const u8FIFO_t *q, u8 offset, u8 *dst);
 //int u8FIFO_last(const u8FIFO_t *q, u8* ch);
 int u8FIFOisEmpty2(const u8FIFO_t *q);
+int u8FIFOlength2(u8FIFO_t *q);
 int u8FIFOout2(u8FIFO_t *q, u8Data_t *u8Data);
 int u8FIFOout2_irq(u8FIFO_t *q, u8Data_t *u8Data);
 
