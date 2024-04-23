@@ -42,9 +42,35 @@ int sysProcess(void *pMsg)
                 /** do something **/
                 /** what ? **/
             } else if (objtype == obj_SSID) {
+                #if 0  // ??????????????????????????
+                    for (i = 0; i < strlen(g_buf); i++) {
+                        u8Data.u8Val = g_buf[i];
+                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                    }
+                #endif  // ??????????????????????????
                 memset(g_KVarr, 0, sizeof(g_KVarr));
-                JsonParseL0(g_buf, g_KVarr);
-                for (u8 i = 0; ((i < MTABSIZE(g_KVarr)) && (g_KVarr[i].KVIndex > 0)); i++) {
+                strim(g_buf);
+                if (JsonParseL0(g_buf, g_KVarr) == 0){
+                    #if 0 // ????????????????????????????????????
+                    for (i = 0; i < strlen(g_buf); i++) {
+                        u8Data.u8Val = g_buf[i];
+                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                    }
+                    #endif // ????????????????????????????????????
+                }
+                #if 0 // ???????????????????????????
+                for (i = 0; (i < MTABSIZE(g_KVarr)); i++) {
+                    for(int j = 0; j < strlen(g_KVarr[i].key); j++) {
+                        u8Data.u8Val = g_KVarr[i].key[j];
+                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                    }
+                    for(int j = 0; j < strlen(g_KVarr[i].value); j++) {
+                        u8Data.u8Val = g_KVarr[i].value[j];
+                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                    }
+                }
+                #endif // ???????????????????????????
+                for (i = 0; ((i < MTABSIZE(g_KVarr)) && (g_KVarr[i].KVIndex > 0)); i++) {
                     if (strstr(g_KVarr[i].key, "status") && strstr(g_KVarr[i].value, "1")) {
                         flag |= (1 << 1);
                     }
@@ -52,12 +78,27 @@ int sysProcess(void *pMsg)
                         flag |= (1 << 2);
                         strncpy(g_netInfo.ssid, g_KVarr[i].value, sizeof(g_netInfo.ssid));  /** 未知长度，限制长度上限**/
                     }
+                    
+                    #if 0  // ??????????????????????????
+                    for (int j = 0; j < strlen(g_KVarr[i].key); j++) {
+                        u8Data.u8Val = g_KVarr[i].key[j];
+                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                    }
+                    
+                        u8Data.u8Val = ':';
+                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                    for (int j = 0; j < strlen(g_KVarr[i].value); j++) {
+                        u8Data.u8Val = g_KVarr[i].value[j];
+                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                    }
+                    #endif  // ??????????????????????????
                 }
                 if ((flag & 0x60) == 0x60) {
                     g_netInfo.flag |= (1 << 0);
                 }
             } else if (objtype == obj_IP) {
                 memset(g_KVarr, 0, sizeof(g_KVarr));
+                strim(g_buf);
                 JsonParseL0(g_buf, g_KVarr);
                 for (u8 i = 0; ((i < MTABSIZE(g_KVarr)) && (g_KVarr[i].KVIndex > 0)); i++) {
                     if (strstr(g_KVarr[i].key, "status") && strstr(g_KVarr[i].value, "1")) {
@@ -73,6 +114,7 @@ int sysProcess(void *pMsg)
                 }
             } else if (objtype == obj_MAC) {
                 memset(g_KVarr, 0, sizeof(g_KVarr));
+                strim(g_buf);
                 JsonParseL0(g_buf, g_KVarr);
                 for (u8 i = 0; ((i < MTABSIZE(g_KVarr)) && (g_KVarr[i].KVIndex > 0)); i++) {
                     if (strstr(g_KVarr[i].key, "status") && strstr(g_KVarr[i].value, "1")) {
@@ -89,6 +131,16 @@ int sysProcess(void *pMsg)
             } else if (objtype == obj_RSSI) {
                 strncpy(g_netInfo.rssi, g_buf, sizeof(g_netInfo.rssi));
                 g_netInfo.flag |= (1 << 3);
+                #if 0  // ??????????????????????????
+                    for (i = 0; i < strlen(g_buf); i++) {
+                        u8Data.u8Val = g_buf[i];
+                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                    }
+                    for (i = 0; i < strlen(g_netInfo.rssi); i++) {
+                        u8Data.u8Val = g_netInfo.rssi[i];
+                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                    }
+                #endif  // ??????????????????????????
             }
         }
         break;

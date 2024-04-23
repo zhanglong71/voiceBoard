@@ -154,6 +154,7 @@ int main(void)
     /*********************************/
     promptInit();
     rs485Init();
+    netInfoData_init();
     
     fstack_init(&g_fstack);
     //func.func = f_init;

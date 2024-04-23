@@ -361,6 +361,7 @@ jsonTL_t* getService(u8 idx)
         {
             "reportService", 0,
             "{"
+            #if 0
                 "\"sId\":["
                     "\"status\","
                     "\"charge\","
@@ -381,6 +382,45 @@ jsonTL_t* getService(u8 idx)
                     "\"netInfo\","
                     "\"update\""
                 "]"
+            #else
+                #if 0
+                "\"sId\":["
+                    "\"status\","
+                    "\"charge\","
+                    "\"clearWater\","
+                    "\"roller\","
+                    "\"batterystatus\","
+                    "\"mop\","
+                    "\"netInfo\""
+                    "],"
+                "\"sType\":["
+                    "\"status\","
+                    "\"charge\","
+                    "\"clearWater\","
+                    "\"roller\","
+                    "\"batterystatus\","
+                    "\"mop\","
+                    "\"netInfo\""
+                "]"
+                #else
+                "\"sId\":["
+                    "\"status\","
+                    "\"charge\","
+                    "\"clearWater\","
+                    "\"roller\","
+                    "\"batterystatus\","
+                    "\"mop\""
+                    "],"
+                "\"sType\":["
+                    "\"status\","
+                    "\"charge\","
+                    "\"clearWater\","
+                    "\"roller\","
+                    "\"batterystatus\","
+                    "\"mop\""
+                "]"
+                #endif
+            #endif
             "}"
         }
        // {"reportService", 0, ""}
@@ -435,6 +475,33 @@ RetStatus digit2ascii(int from, char* to)
         to[1] = '\0';
     }
     #endif
+    return POK;
+}
+
+/**
+ * remove the first and last blank character
+ **/
+RetStatus strim(char* str) 
+{
+    char *end, *sp, *ep;
+    int len;
+    
+    sp = str;
+    end = str + strlen(str) - 1;  /** the last valid character **/ 
+    ep = end;
+    
+    while((sp <= end) && isspace(*sp)) {     /** head blank **/
+        sp++;
+    }
+    while((ep >= sp) && isspace(*ep)) {      /** tail blank **/
+        ep--;
+    }
+    len = ((ep < sp) ? 0:((ep - sp) + 1));  /** valid character length **/
+    
+    for (int i = 0; i < len; i++) {
+        str[i] = sp[i];
+    }
+    str[len] = '\0';
     return POK;
 }
 
@@ -722,6 +789,7 @@ const static Quadruple_keylenbody_t identifyKeyBodyMsg[] = {
     // {CKEYINDEX_SCANWIFI,      0,  0,                        CSCAN_WIFI},
     // {CKEYINDEX_CONNECTWIFI,   0,  0,                        CCONN_WIFI},
     // {CKEYINDEX_PUTWIFISTATUS, 0,  0,                        CMSG_NONE},
+    
     {CKEYINDEX_GETSSID,       0,  0,                        CMSG_NONE},
     {CKEYINDEX_GETIP,         0,  0,                        CMSG_NONE},
     {CKEYINDEX_GETMAC,        0,  0,                        CMSG_NONE},
@@ -818,10 +886,6 @@ objType_t sm_receiveData(char *data)
         if (getStringIndexbyString(commandKeyArr, MTABSIZE(commandKeyArr), data, &s_keyIdx) == POK) {
             s_bodyLen = 0;
             s_smStatus = sm_receiveLenStep2;
-                #if 0  // ??????????????????????????
-                u8Data.u8Val = 'K';
-                u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                #endif  // ??????????????????????????
             return obj_key;
         } else {
             /** unrecongized **/
@@ -841,10 +905,6 @@ objType_t sm_receiveData(char *data)
             #endif
             s_smStatus = sm_receiveBody;
             offset = u8FIFOlength(&g_uart2RxQue);
-                #if 0  // ??????????????????????????
-                u8Data.u8Val = 'L';
-                u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                #endif  // ??????????????????????????
             return obj_len;
         } else if (chData == '\n') {
             u8FIFOinit_irq(&g_uart2RxQue);
@@ -859,12 +919,6 @@ objType_t sm_receiveData(char *data)
         }
         return obj_none;
     } else if (s_smStatus == sm_receiveBody) {    /** identifing body **/
-        // ??????????????????????????????
-        #if 0
-            u8Data.u8Val = chData;
-            u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-        #endif
-        // ??????????????????????????????
         /** offset: start of head, end of len **/
         if (u8FIFO_get(&g_uart2RxQue, offset, (u8*)data) != TRUE) {
             return obj_none;
@@ -873,30 +927,26 @@ objType_t sm_receiveData(char *data)
             ClrTimer_irq(&g_timer[1]);     // !!!!!! fellow the Dm6
             u8FIFOinit_irq(&g_uart2RxQue);
             s_smStatus = sm_init;   // over 
-                    #if 0  // ??????????????????????????
-                    u8Data.u8Val = 'B';
-                    u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                    #endif  // ??????????????????????????
         #if 1
-            /** step 1: identify the body **/
+            /** step 1: no need identify the body here **/
+            if (KeyBody2objType(s_keyIdx, &objType) == POK) {
+                #if 0 // ????????????????????????
+                u8Data.u8Val = '0' + objType;
+                u8FIFOin_irq(&g_uart2TxQue, &u8Data);
+                #endif // ???????????????????????å
+                return objType;
+            }
+            /** step 2: identify the body **/
             if (getStringIndexbyString(commandBodyArr, MTABSIZE(commandBodyArr), data, &bodyIdx) != POK) {
                 /**unrecognized the body **/
                 return obj_body;
             }
         
-            /** step 2: identify the body class A, then notify by msg **/
+            /** step 3: identify the body class A, then notify by msg **/
             if (KeyBody2Msg(s_keyIdx, s_bodyLen, bodyIdx, &(msg.msgType)) == POK) {
                 msgq_in_irq(&g_msgq, &msg);
-                #if 0  // ??????????????????????????
-                u8Data.u8Val = 'M';
-                u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                #endif  // ??????????????????????????
             }
 
-            /** step 3: identify the body class B, need to further identify **/
-            if (KeyBody2objType(s_keyIdx, &objType) == POK) {
-                return objType;
-            }
         #endif
             return obj_body;
         }
@@ -907,7 +957,6 @@ objType_t sm_receiveData(char *data)
             u8Data.u8Val = 'F';
             u8FIFOin_irq(&g_uart2TxQue, &u8Data);
             #endif
-        } else {
         }
         if (u8FIFOlength(&g_uart2RxQue) >= (s_bodyLen + offset + 1)      /** strlen(",x,") + the "" end of body + the \n end of body **/) {
             u8FIFOinit_irq(&g_uart2RxQue);

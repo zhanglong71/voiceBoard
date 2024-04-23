@@ -14,6 +14,7 @@ jsonTL_t* getService(u8 idx);
 
 void sm_sendData(jsonTL_t* p);
 void sm_sendData_once(jsonTL_t* jp);
+RetStatus strim(char* str) ;
 objType_t sm_receiveData(char *data);
 
 u8 getCommandKeyArrLen(void);
