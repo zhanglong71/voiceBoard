@@ -36,40 +36,12 @@ int sysProcess(void *pMsg)
         if(u8FIFOisEmpty(&g_uart2RxQue) != TRUE) {
             /** do something to uart2 data **/
             objType_t objtype = sm_receiveData(g_buf);
-            if (objtype == obj_none) {
-                /** nothing **/
-            } else if ((objtype == obj_key) || (objtype == obj_len) || (objtype == obj_body)) {
-                /** do something **/
-                /** what ? **/
-            } else if (objtype == obj_SSID) {
-                #if 0  // ??????????????????????????
-                    for (i = 0; i < strlen(g_buf); i++) {
-                        u8Data.u8Val = g_buf[i];
-                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                    }
-                #endif  // ??????????????????????????
+            if ((objtype == obj_SSID) || (objtype == obj_IP) || (objtype == obj_MAC)) {
                 memset(g_KVarr, 0, sizeof(g_KVarr));
                 strim(g_buf);
-                if (JsonParseL0(g_buf, g_KVarr) == 0){
-                    #if 0 // ????????????????????????????????????
-                    for (i = 0; i < strlen(g_buf); i++) {
-                        u8Data.u8Val = g_buf[i];
-                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                    }
-                    #endif // ????????????????????????????????????
+                if (JsonParseL0(g_buf, g_KVarr) == 0) {
+                    /** do what? nothing! **/
                 }
-                #if 0 // ???????????????????????????
-                for (i = 0; (i < MTABSIZE(g_KVarr)); i++) {
-                    for(int j = 0; j < strlen(g_KVarr[i].key); j++) {
-                        u8Data.u8Val = g_KVarr[i].key[j];
-                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                    }
-                    for(int j = 0; j < strlen(g_KVarr[i].value); j++) {
-                        u8Data.u8Val = g_KVarr[i].value[j];
-                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                    }
-                }
-                #endif // ???????????????????????????
                 for (i = 0; ((i < MTABSIZE(g_KVarr)) && (g_KVarr[i].KVIndex > 0)); i++) {
                     if (strstr(g_KVarr[i].key, "status") && strstr(g_KVarr[i].value, "1")) {
                         flag |= (1 << 1);
@@ -78,69 +50,23 @@ int sysProcess(void *pMsg)
                         flag |= (1 << 2);
                         strncpy(g_netInfo.ssid, g_KVarr[i].value, sizeof(g_netInfo.ssid));  /** 未知长度，限制长度上限**/
                     }
-                    
-                    #if 0  // ??????????????????????????
-                    for (int j = 0; j < strlen(g_KVarr[i].key); j++) {
-                        u8Data.u8Val = g_KVarr[i].key[j];
-                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                    }
-                    
-                        u8Data.u8Val = ':';
-                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                    for (int j = 0; j < strlen(g_KVarr[i].value); j++) {
-                        u8Data.u8Val = g_KVarr[i].value[j];
-                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                    }
-                    #endif  // ??????????????????????????
-                }
-                if ((flag & 0x60) == 0x60) {
-                    g_netInfo.flag |= (1 << 0);
-                }
-            } else if (objtype == obj_IP) {
-                memset(g_KVarr, 0, sizeof(g_KVarr));
-                strim(g_buf);
-                JsonParseL0(g_buf, g_KVarr);
-                for (u8 i = 0; ((i < MTABSIZE(g_KVarr)) && (g_KVarr[i].KVIndex > 0)); i++) {
-                    if (strstr(g_KVarr[i].key, "status") && strstr(g_KVarr[i].value, "1")) {
-                        flag |= (1 << 1);
-                    }
                     if (strstr(g_KVarr[i].key, "ip")) {
                         flag |= (1 << 2);
                         strncpy(g_netInfo.ip, g_KVarr[i].value, sizeof(g_netInfo.ip));
-                    }
-                }
-                if ((flag & 0x60) == 0x60) {
-                    g_netInfo.flag |= (1 << 1);
-                }
-            } else if (objtype == obj_MAC) {
-                memset(g_KVarr, 0, sizeof(g_KVarr));
-                strim(g_buf);
-                JsonParseL0(g_buf, g_KVarr);
-                for (u8 i = 0; ((i < MTABSIZE(g_KVarr)) && (g_KVarr[i].KVIndex > 0)); i++) {
-                    if (strstr(g_KVarr[i].key, "status") && strstr(g_KVarr[i].value, "1")) {
-                        flag |= (1 << 1);
                     }
                     if (strstr(g_KVarr[i].key, "mac")) {
                         flag |= (1 << 2);
                         strncpy(g_netInfo.mac, g_KVarr[i].value, sizeof(g_netInfo.mac));
                     }
                 }
-                if ((flag & 0x60) == 0x60) {
-                    g_netInfo.flag |= (1 << 2);
+                if ((flag & 0x60) == 0x60) { /** make sure the status==1 **/
+                    g_netInfo.flag |= (1 << 0);
                 }
             } else if (objtype == obj_RSSI) {
                 strncpy(g_netInfo.rssi, g_buf, sizeof(g_netInfo.rssi));
                 g_netInfo.flag |= (1 << 3);
-                #if 0  // ??????????????????????????
-                    for (i = 0; i < strlen(g_buf); i++) {
-                        u8Data.u8Val = g_buf[i];
-                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                    }
-                    for (i = 0; i < strlen(g_netInfo.rssi); i++) {
-                        u8Data.u8Val = g_netInfo.rssi[i];
-                        u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                    }
-                #endif  // ??????????????????????????
+            } else { /** (objtype == obj_key) || (objtype == obj_len) || (objtype == obj_body) || (objtype == obj_none) **/
+                /** do nothing **/
             }
         }
         break;
@@ -157,8 +83,7 @@ int sysProcess(void *pMsg)
          ************************************/
         memset(g_buf, 0, sizeof(g_buf));
         memset(g_KVarr, 0, sizeof(g_KVarr));
-        
- #if 1
+
         for(i = 0; ((i < MTABSIZE(g_buf)) && (u8FIFOout_irq(&g_uart1RxQue, &u8Data) == TRUE)); i++) {
             g_buf[i] = u8Data.u8Val;
         }
@@ -167,20 +92,8 @@ int sysProcess(void *pMsg)
         } else {
             u8FIFOinit_irq(&g_uart1RxQue);  /** !!!!!!!!!!!! **/
             /** something wrong happened **/
-            #if 0
-            u8Data.u8Val = 'f';
-            u8FIFOin_irq(&g_uart1TxQue, &u8Data);
-            u8Data.u8Val = 'f';
-            u8FIFOin_irq(&g_uart1TxQue, &u8Data);
-            #endif
         }
- #endif
- #if 0
-        for (i = 0; ((i < strlen(buf)) && (i < MTABSIZE(buf))); i++) {
-            u8Data.u8Val = buf[i];
-            rs485_stor_irq(&u8Data);
-        }
- #else
+
         if (JsonParseL0(g_buf, g_KVarr)) {
             int voi = 0;
             u8 flag = 0;
@@ -212,11 +125,6 @@ int sysProcess(void *pMsg)
                         vp_stop1();
                         vp_stor(voi);
                     }
-                    #if 0  //???????????????????? for debug only
-                    u8Data_t u8Data;
-                    u8Data.u8Val = voi;
-                    u8FIFOin_irq(&g_uart2TxQue, &u8Data);
-                    #endif  // ????????????????????
                     setStatusByvoiceIdx((u8)voi);
                     reportStatusByvoiceIdx((u8)voi);
                     /** construct ack**/
@@ -229,35 +137,20 @@ int sysProcess(void *pMsg)
             if (Mget_bit(flag, 1) && Mget_bit(flag, 4)) {
                 generateVoiceAckVer(g_KVarr[src_idx].key, CVERSION);
             }
-        };
-#endif
+        }
         break;
         
     case CMSG_UART1RX:
-	    #if 0
-        if(u8FIFOisEmpty(&g_uart1RxQue) != TRUE) {
-            //u8 len = 0;
-            
-            //while (u8FIFO_last(&g_uart1RxQue, &u8Data) == TRUE) {
-            while (u8FIFOout_irq(&g_uart1RxQue, &u8Data) == TRUE) {
-                u8FIFOin_irq(&g_uart2TxQue, &u8Data);//????????????????????????????
-            } 
-        }
-        #endif
         break;
         
     case CMSG_UART2TX:
-    #if 1
         sm_sendData(NULL);
-    #endif
         break;
     
     case CMSG_UART1TX:
         /** nothing **/
         break;
-        
-        #if 1
-    
+
     case CGETCHAR_MOP:
     case CGETCHAR_ROLLER:
     case CGETCHAR_CLEARWATER:
@@ -267,26 +160,7 @@ int sysProcess(void *pMsg)
     case CGETCHAR_STATUS:
         AckgetCharStatusByMsgType(((msg_t *)pMsg)->msgType);
         break;
-        #else
-    case CGETCHAR_MOP:
-        (void)AckGetCharWorkMode();
-        break;
-    case CGETCHAR_ROLLER:
-        (void)AckGetCharRollerStatus();
-        break;
-    case CGETCHAR_CLEARWATER:
-        (void)AckGetCharClearWaterStatus();
-        break;
-    case CGETCHAR_PUMP:
-        (void)AckGetCharPumpStatus();
-        break;
-    case CGETCHAR_BATTERY:
-        (void)AckGetCharBatteryStatus();
-        break;
-    case CGETCHAR_CHARGE:
-        (void)AckGetCharChargeStatus();
-        break;
-        #endif
+
     case CGETCHAR_NETINFO:
         checkAndAckGetCharNetInfo();
         break;
@@ -298,28 +172,16 @@ int sysProcess(void *pMsg)
         break;
 
     case CPUT_CHAR:
-         #if 0  //?????????????????? for test only
-			(void)JsonParse(NULL, NULL);
-             len = strlen(buf);
-             for(int i = 0; i < len; i++) {
-                  u8Data.u8Val = buf[i];
-                  u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-             }
-        #endif
 			break;
         
     case CGETDEVINFO_REQ:
     case CGETDEVINFO_RSPERROR:
-    #if 1
         (void)reportDevInfo(NULL);
-    #endif
         break;
         
     case CREPORT_RSPERROR:   /** report Services error, try again **/
     case CGETDEVINFO_RSPOK:  /** according protocal report Services after devInfo reported ok **/
-        #if 1
         (void)reportService(0);
-        #endif
         break;
         
     case CREPORT_RSPOK:
@@ -332,20 +194,11 @@ int sysProcess(void *pMsg)
         break;
 
     case CHEART_BEAT:
-        #if 1
         (void)reportHeartbeat();
-        #endif
         break;
 
     case CWIFI_TEST:
         /** do test only! 2-byte data !!! **/
-        #if 0
-             len = strlen(buf);
-             for(int i = 0; i < len; i++) {
-                  u8Data.u8Val = buf[i];
-                  u8FIFOin_irq(&g_uart3TxQue, &u8Data);
-             }
-        #endif
         break;
         
     case CPMT_TOUT:        /** 一段提示动作完成 **/
