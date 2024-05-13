@@ -25,8 +25,10 @@ void GPIO_initVOPPort(void)
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
   GPIO_Init(GPIOD, &GPIO_InitStructure);
 
-  GPIO_SetBits(GPIOD, GPIO_Pin_2);
-  GPIO_ResetBits(GPIOD, GPIO_Pin_3);
+  // GPIO_SetBits(GPIOD, GPIO_Pin_2);
+  MVopData_H("init status: H");
+  // GPIO_ResetBits(GPIOD, GPIO_Pin_3);
+  MVopPower_off("init power status: power off");
 }
 
 void GPIO_init485(void)
