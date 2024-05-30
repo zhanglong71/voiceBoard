@@ -10,9 +10,9 @@
 #define MVopData_L(x)  do{GPIO_ResetBits(GPIOD, GPIO_Pin_2);}while(0)
 #define MVopData_H(x) do{GPIO_SetBits(GPIOD, GPIO_Pin_2);}while(0)
 
-#define MVopPower_on(x) do{GPIO_SetBits(GPIOD, GPIO_Pin_3);}while(0)
-// #define MVopPower_off(x) do{GPIO_ResetBits(GPIOD, GPIO_Pin_3);}while(0)
-#define MVopPower_off(x) do{GPIO_SetBits(GPIOD, GPIO_Pin_3);}while(0)  //  !!!!!! 改为常开 !!!!!!
+#define MVopPower_on(x) // do{GPIO_SetBits(GPIOD, GPIO_Pin_3);}while(0)
+#define MVopPower_off(x) // do{GPIO_ResetBits(GPIOD, GPIO_Pin_3);}while(0)
+#define MVopReadBusy_status(x) GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3)
 /*********************************************************************************/
 #define MWifi_enable(x) do{GPIO_SetBits(GPIOC, GPIO_Pin_5);}while(0)
 #define MWifi_disable(x) do{GPIO_ResetBits(GPIOC, GPIO_Pin_5);}while(0)

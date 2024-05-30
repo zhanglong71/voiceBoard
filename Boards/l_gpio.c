@@ -20,12 +20,12 @@ void GPIO_initVOPPort(void)
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
   GPIO_Init(GPIOD, &GPIO_InitStructure);
     
-  /* Configure PD03(5V_EN) in output pushpull mode */
+  /* Configure PD03(busy) in input pushpull mode */
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
   GPIO_Init(GPIOD, &GPIO_InitStructure);
 
-  // GPIO_SetBits(GPIOD, GPIO_Pin_2);
   MVopData_H("init status: H");
   // GPIO_ResetBits(GPIOD, GPIO_Pin_3);
   MVopPower_off("init power status: power off");
@@ -34,10 +34,10 @@ void GPIO_initVOPPort(void)
 void GPIO_init485(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
-  /* GPIOD Periph clock enable */
+  /* GPIOB Periph clock enable */
   RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB, ENABLE);
 
-  /* Configure PD02() in output pushpull mode */
+  /* Configure PB04() in output pushpull mode */
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -95,7 +95,7 @@ void GPIO_init4led(void)
   /* GPIOD Periph clock enable */
   RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC | RCC_AHBPeriph_GPIOD, ENABLE);
 
-  /* Configure PD01 in output pushpull mode */
+  /* Configure PD01 in output pushpull mode,  wifi enable  */
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -103,24 +103,25 @@ void GPIO_init4led(void)
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;    // GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOD, &GPIO_InitStructure);
 
-  /** wifi enable **/
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
+  GPIO_SetBits(GPIOD, GPIO_Pin_1);
+
+  
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
-  GPIO_SetBits(GPIOC, GPIO_Pin_5);
 
   /** test only **/
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
 }
 
 void GPIO_led1_blink(void)
 {
-    GPIO_Toggle(GPIOD, GPIO_Pin_1);
+    GPIO_Toggle(GPIOC, GPIO_Pin_3);
 }
 
 void GPIO_led2_blink(void)
 {
-    GPIO_Toggle(GPIOC, GPIO_Pin_7);
+    GPIO_Toggle(GPIOC, GPIO_Pin_4);
 }
 
 void GPIO_led_blink(void)
@@ -138,8 +139,8 @@ void GPIO_led_blink(void)
         GPIO_WriteBit(GPIOD, GPIO_Pin_1, Bit_RESET);  \
     }
 #else
-    GPIO_Toggle(GPIOD, GPIO_Pin_1);
-    GPIO_Toggle(GPIOC, GPIO_Pin_7);
+    GPIO_Toggle(GPIOC, GPIO_Pin_3);
+    GPIO_Toggle(GPIOC, GPIO_Pin_4);
 #endif
 }
 
@@ -150,8 +151,8 @@ void GPIO_PC06_K11INPUT(void) // for test ??????????????????????????????????
     /* Enable GPIOC clock */
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC, ENABLE);
     
-    /* Configure PC6 pin as input floating */
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+    /* Configure PC7 pin as input floating */
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
     GPIO_Init(GPIOC, &GPIO_InitStructure);

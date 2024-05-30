@@ -41,3 +41,20 @@
 2024/4/23 9:56:20 网络数据查询及上报功能(可靠性待完善50%正确率)
                   通过 修正 offset = u8FIFOlength(&g_uart2RxQue) - u8FIFOlength2(&g_uart2RxQue); netInfo信息接收处理大幅提升正确率(目前测试结果全部正确！注意测试数据的正确性)
 2024/5/13 10:16:13 修改DCDC开关逻辑：播放时才打开 ==> 常开[MVopPower_off()改为常开]
+2024/5/30 9:08:31 为兼容与后面wifi模组通信，计划修改端口使用：
+           改前原端口规划使用：
+             uart1: PA3(Tx)/PA2(Rx)/PB4(485方向)
+             uart2: PC3(Tx)/PC4(Rx)/PC5(W_en)
+             voice: PD2(DIO)/PD3(PWR)
+             IN_K11:PC6
+           改后端口规划使用：
+             uart1: PA3(Tx)/PD6(Rx)/PB4(485方向)
+             uart2: PC5(Tx)/PC6(Rx)/PD1(W_en)
+             voice: PD2(DIO)/PD3(PWR)
+             INK11: PC7
+             从以上修改对比得到: 只要修改uart1的Rx(修改GPIO_Configuration4uart函数限可); uart2的需要全新修改(修改GPIO_Configuration4uart函数限可); voice引脚没有变化(PD3改为?输入); 
+             其它可能影响的调试用接口：GPIO_init4led()；GPIO_PC06_K11INPUT();RCC_Configuration4uart() 
+           1. 由于此版本放弃原计划的与wifi模组的通信，此软件版本理论上只要修改uart1的Rx使用即可满足要求！
+           2. 出于验证PCB板的可用性，实现uart2只用于验证板子走线！
+           待验证！！！
+             

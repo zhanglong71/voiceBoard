@@ -78,7 +78,7 @@ void deamon_uart2_send(void)
 void RCC_Configuration4uart(void)
 {
   /* Enable GPIO clock */
-  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA | RCC_AHBPeriph_GPIOC, ENABLE);
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA | RCC_AHBPeriph_GPIOC | RCC_AHBPeriph_GPIOD, ENABLE);
 
   /* Enable UART1 clock */
   RCC_APBPeriph2ClockCmd(RCC_APBPeriph2_UART1, ENABLE);
@@ -98,16 +98,17 @@ void GPIO_Configuration4uart(void)
 
   /*
     UART1_TX:PA3  AF1
-    UART1_RX:PA2  AF1
+    UART1_RX:PA2  AF1 ==> UART1_RX:PD6
 
-    UART2_TX:PC3   AF6
-    UART2_RX:PC4   AF6
+    UART2_TX:PC3   AF6 ==> UART2_TX:PC5
+    UART2_RX:PC4   AF6 ==> UART2_TX:PC6
   */
 
   /* UART1 Pins configuration ************************************************/
   /* Connect pin to Periph */
   GPIO_PinAFConfig(GPIOA, GPIO_PinSource3, GPIO_AF_1);
-  GPIO_PinAFConfig(GPIOA, GPIO_PinSource2, GPIO_AF_1);
+  // GPIO_PinAFConfig(GPIOA, GPIO_PinSource2, GPIO_AF_1);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource6, GPIO_AF_1);
 
   /* Configure pins as AF pushpull */
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
@@ -117,24 +118,28 @@ void GPIO_Configuration4uart(void)
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+  // GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;  /* RX Pull-Up can filter noise*/
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  // GPIO_Init(GPIOA, &GPIO_InitStructure);
+  GPIO_Init(GPIOD, &GPIO_InitStructure);
 
   /* UART2 Pins configuration ************************************************/
   /* Connect pin to Periph */
-  GPIO_PinAFConfig(GPIOC, GPIO_PinSource3, GPIO_AF_6);
-  GPIO_PinAFConfig(GPIOC, GPIO_PinSource4, GPIO_AF_6);
+  //GPIO_PinAFConfig(GPIOC, GPIO_PinSource3, GPIO_AF_6);
+  //GPIO_PinAFConfig(GPIOC, GPIO_PinSource4, GPIO_AF_6);
+  GPIO_PinAFConfig(GPIOC, GPIO_PinSource5, GPIO_AF_6);
+  GPIO_PinAFConfig(GPIOC, GPIO_PinSource6, GPIO_AF_6);  // ??????????????
 
   /* Configure pins as AF pushpull */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;   /* RX Pull-Up can filter noise*/
   GPIO_Init(GPIOC, &GPIO_InitStructure);
 }
@@ -143,7 +148,7 @@ void UART1_Configuration(void)
 {
   /* UART1 configuration --------------------------------------------------*/
   /*configured as follow:
-  - BaudRate = 9600 baud
+  - BaudRate = 115200 baud
   - Word Length = 8 Bits
   - One Stop Bit
   - No parity
