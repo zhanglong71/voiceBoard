@@ -50,11 +50,12 @@
            改后端口规划使用：
              uart1: PA3(Tx)/PD6(Rx)/PB4(485方向)
              uart2: PC5(Tx)/PC6(Rx)/PD1(W_en)
-             voice: PD2(DIO)/PD3(PWR)
+             voice: PD2(DIO)/PD3(BUSY)
              INK11: PC7
              从以上修改对比得到: 只要修改uart1的Rx(修改GPIO_Configuration4uart函数限可); uart2的需要全新修改(修改GPIO_Configuration4uart函数限可); voice引脚没有变化(PD3改为?输入); 
              其它可能影响的调试用接口：GPIO_init4led()；GPIO_PC06_K11INPUT();RCC_Configuration4uart() 
            1. 由于此版本放弃原计划的与wifi模组的通信，此软件版本理论上只要修改uart1的Rx使用即可满足要求！
            2. 出于验证PCB板的可用性，实现uart2只用于验证板子走线！
            待验证！！！
+2024/6/3 14:21:02 新板子上验证正常(485发信号，播放语音正常)
              

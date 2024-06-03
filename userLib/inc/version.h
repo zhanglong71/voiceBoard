@@ -3,7 +3,7 @@
 
 #define CBOARD "voice"
 #define CWARE "soft"
-#define CDATETIME "202405130954"
-#define CVERSION "v002"
+#define CDATETIME "202406031422"
+#define CVERSION "v201"
 
 #endif
